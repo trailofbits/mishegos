@@ -8,7 +8,7 @@
 #else
 #define DLOG(...)
 #define NDEBUG
-#define _unused(x) ((void) (x))
+#define _unused(x) ((void)(x))
 #endif
 
 #include <assert.h>
@@ -69,6 +69,11 @@ typedef enum {
   S_UNKNOWN,
 } decode_status;
 
+typedef enum {
+  A_SINGLE,
+  A_MULTIPLE,
+} analysis_kind;
+
 typedef struct {
   uint32_t no;
   char *so;
@@ -87,8 +92,9 @@ typedef struct __attribute__((packed)) {
   decode_status status;
   uint16_t len;
   char result[MISHEGOS_DEC_MAXLEN];
+  uint16_t ndecoded;
 } output_slot;
-static_assert(sizeof(output_slot) == 1044, "output_slot should be 1044 bytes");
+static_assert(sizeof(output_slot) == 1046, "output_slot should be 1046 bytes");
 
 static inline void hexputs(uint8_t *buf, uint8_t len) {
   for (int i = 0; i < len; ++i) {
