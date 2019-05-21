@@ -12,7 +12,7 @@ MAKEOVERRIDES := $(filter-out LDFLAGS=%,$(MAKEOVERRIDES))
 MAKEOVERRIDES := $(filter-out LDLIBS=%,$(MAKEOVERRIDES))
 capstone/libcapstone.so.5:
 	$(MAKE) -C capstone/ \
-		CAPSTONE_ARCHS="x86" CAPSTONE_X86_ATT_DISABLE=yes V=1
+		CAPSTONE_ARCHS="x86" CAPSTONE_X86_ATT_DISABLE=yes CAPSTONE_BUILD_CORE_ONLY=yes V=1
 
 capstone.so: capstone/libcapstone.so.5 capstone.o
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) capstone.o $(LDLIBS) -o $@

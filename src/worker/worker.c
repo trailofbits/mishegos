@@ -1,7 +1,7 @@
 #include "mish_common.h"
 #include "worker.h"
 
-static volatile bool exiting;
+static sig_atomic_t exiting;
 static uint32_t workerno;
 static char *worker_name;
 static void (*worker_ctor)();

@@ -1,9 +1,8 @@
 #include "mish_common.h"
 #include "mutator.h"
 
-static volatile bool exiting;
+static sig_atomic_t exiting;
 static worker workers[MISHEGOS_NWORKERS];
-// static pid_t worker_pids[MISHEGOS_NWORKERS];
 static sem_t *mishegos_isems[MISHEGOS_IN_NSLOTS];
 static sem_t *mishegos_osem;
 static uint8_t *mishegos_arena;
@@ -179,7 +178,6 @@ static void arena_init() {
 
 static void cleanup() {
   DLOG("cleaning up");
-  // TODO(ww): kill(2) and wait for each pid in worker_pids.
   for (int i = 0; i < MISHEGOS_NWORKERS; ++i) {
     kill(workers[i].pid, SIGINT);
     waitpid(workers[i].pid, NULL, 0);
