@@ -1,0 +1,4 @@
+*.o
+*.so
+src/mishegos/mishegos
+src/worker/worker
