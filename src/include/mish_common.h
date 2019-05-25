@@ -5,10 +5,12 @@
   fprintf(stderr, "%s:%d %s: " fmt "\n", __FILE__, __LINE__, __func__, ##__VA_ARGS__);
 #undef NDEBUG
 #define _unused(x)
+#define hexputs(x, y) _hexputs(x, y)
 #else
 #define DLOG(...)
 #define NDEBUG
 #define _unused(x) ((void)(x))
+#define hexputs(x, y)
 #endif
 
 #include <assert.h>
@@ -30,13 +32,20 @@
 #include <dlfcn.h>
 #include <sys/wait.h>
 
+#define VERBOSE(fmt, ...)                                                                          \
+  if (verbose) {                                                                                   \
+    fprintf(stderr, fmt "\n", ##__VA_ARGS__);                                                      \
+  }
+
 #define MISHEGOS_INSN_MAXLEN 15
 #define MISHEGOS_DEC_MAXLEN 1018
 
-#define MISHEGOS_IN_NSLOTS 2
+#define MISHEGOS_IN_NSLOTS 1
 #define MISHEGOS_OUT_NSLOTS 1
 #define MISHEGOS_NWORKERS 2
 #define MISHEGOS_MAX_NWORKERS 31 // Size of our worker bitmask, minus 1 (to avoid UB).
+#define MISHEGOS_COHORT_NSLOTS 4
+#define MISHEGOS_COHORT_SEMFMT "/mishegos_csem%d"
 #define MISHEGOS_IN_SEMFMT "/mishegos_isem%d"
 #define MISHEGOS_OUT_SEMNAME "/mishegos_osem"
 
@@ -78,6 +87,7 @@ typedef struct {
   uint32_t no;
   char *so;
   pid_t pid;
+  bool running;
 } worker;
 
 typedef struct __attribute__((packed)) {
@@ -93,10 +103,16 @@ typedef struct __attribute__((packed)) {
   uint16_t len;
   char result[MISHEGOS_DEC_MAXLEN];
   uint16_t ndecoded;
+  uint32_t workerno;
 } output_slot;
-static_assert(sizeof(output_slot) == 1046, "output_slot should be 1046 bytes");
+static_assert(sizeof(output_slot) == 1050, "output_slot should be 1050 bytes");
 
-static inline void hexputs(uint8_t *buf, uint8_t len) {
+typedef struct {
+  uint32_t workers;
+  output_slot outputs[MISHEGOS_NWORKERS];
+} output_cohort;
+
+static inline void _hexputs(uint8_t *buf, uint8_t len) {
   for (int i = 0; i < len; ++i) {
     printf("%02x", buf[i]);
   }

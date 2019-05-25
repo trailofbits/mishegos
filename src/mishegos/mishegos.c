@@ -1,6 +1,14 @@
 #include "mish_common.h"
 #include "mutator.h"
+#include "analysis.h"
 
+typedef struct {
+  uint64_t islots;
+  uint64_t oslots;
+} counters;
+
+static bool verbose;
+static counters counts;
 static sig_atomic_t exiting;
 static worker workers[MISHEGOS_NWORKERS];
 static sem_t *mishegos_isems[MISHEGOS_IN_NSLOTS];
@@ -20,21 +28,34 @@ static void do_inputs();
 static void do_output();
 
 int main(int argc, char const *argv[]) {
-  if (argc != 2) {
-    errx(1, "Usage: mishegos <spec|-t>");
-  }
-
-  if (strcmp(argv[1], "-t") == 0) {
-    DLOG("mutation testing mode");
-    test();
+  if (argc != 2 || strcmp(argv[1], "-h") == 0) {
+    printf("Usage: mishegos <spec|options>\n"
+           "Arguments:\n"
+           "\t<spec> The worker specification to load from\n"
+           "Options:\n"
+           "\t-Xm\tMutator testing mode (sanity check)\n"
+           "\t-Xc\tRun cleanup routines only\n");
     return 0;
   }
 
+  if (strcmp(argv[1], "-Xm") == 0) {
+    DLOG("mutation testing mode");
+    test();
+    return 0;
+  } else if (strcmp(argv[1], "-Xc") == 0) {
+    cleanup();
+    return 0;
+  }
+
+  verbose = (getenv("V") != NULL);
+
+  // Load workers from specification.
   load_worker_spec(argv[1]);
 
   // Create shared memory, semaphores.
   mishegos_shm_init();
   mishegos_sem_init();
+  analysis_init();
 
   // Exit/cleanup behavior.
   atexit(cleanup);
@@ -51,6 +72,7 @@ int main(int argc, char const *argv[]) {
   // Start workers.
   start_workers();
 
+  // Work until stopped.
   work();
   return 0;
 }
@@ -179,8 +201,10 @@ static void arena_init() {
 static void cleanup() {
   DLOG("cleaning up");
   for (int i = 0; i < MISHEGOS_NWORKERS; ++i) {
-    kill(workers[i].pid, SIGINT);
-    waitpid(workers[i].pid, NULL, 0);
+    if (workers[i].running) {
+      kill(workers[i].pid, SIGINT);
+      waitpid(workers[i].pid, NULL, 0);
+    }
 
     if (workers[i].so != NULL) {
       free(workers[i].so);
@@ -201,6 +225,8 @@ static void cleanup() {
 
   sem_unlink(MISHEGOS_OUT_SEMNAME);
   sem_close(mishegos_osem);
+
+  analysis_cleanup();
 }
 
 static void exit_sig(int signo) {
@@ -229,6 +255,7 @@ static void start_workers() {
     }
     default: { // Parent.
       workers[i].pid = pid;
+      workers[i].running = true;
       break;
     }
     }
@@ -237,10 +264,23 @@ static void start_workers() {
 
 static void work() {
   while (!exiting) {
+    if (verbose) {
+      if (counts.islots % 100 == 0) {
+        VERBOSE("inputs processed: %lu", counts.islots);
+      }
+      if (counts.oslots % 100 == 0) {
+        VERBOSE("outputs processed: %lu", counts.oslots);
+      }
+    }
+
     DLOG("working...");
     do_inputs();
     do_output();
+    pump_cohorts();
+
+#ifdef DEBUG
     sleep(1);
+#endif
   }
 
   DLOG("exiting...");
@@ -262,6 +302,8 @@ static void do_inputs() {
      */
     slot->workers = ~(~0 << MISHEGOS_NWORKERS);
     candidate(slot);
+    counts.islots++;
+
     DLOG("slot=%d new candidate:", i);
     hexputs(slot->raw_insn, slot->len);
 
@@ -281,12 +323,23 @@ static void do_output() {
     goto done;
   }
 
-  if (slot->status == S_FAILURE) {
-    DLOG("result: failure");
-  } else {
-    DLOG("result: %s\n%.*s", status2str(slot->status), (int)slot->len, slot->result);
+  if (!add_to_cohort(slot)) {
+    DLOG("output slot still waiting on a cohort slot");
+    goto done;
   }
+
+  /* Mark the output slot as available.
+   */
   slot->status = S_NONE;
+  counts.oslots++;
+
+  // DLOG("result for input: ");
+  // hexputs(slot->input.raw_insn, slot->input.len);
+  // if (slot->status == S_FAILURE) {
+  //   DLOG("result: failure");
+  // } else {
+  //   DLOG("result: %s\n%.*s", status2str(slot->status), (int)slot->len, slot->result);
+  // }
 
 done:
   sem_post(mishegos_osem);

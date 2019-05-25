@@ -157,7 +157,9 @@ static void put_first_available_output_slot(output_slot *slot) {
   bool available = false;
 
   while (!available && !exiting) {
+#ifdef DEBUG
     sleep(1);
+#endif
     sem_wait(mishegos_osem);
 
     output_slot *dest = GET_O_SLOT(0);
@@ -178,7 +180,10 @@ static void work() {
   while (!exiting) {
     DLOG("%s working...", worker_name);
 
+#ifdef DEBUG
     sleep(1);
+#endif
+
     input_slot *input = get_first_new_input_slot();
 
     if (input != NULL) {
@@ -189,6 +194,11 @@ static void work() {
        */
       memcpy(&output->input, input, sizeof(input_slot));
       free(input);
+
+      /* Also put our worker number into the output slot, so we can index
+       * our worker cohort correctly.
+       */
+      output->workerno = workerno;
 
       put_first_available_output_slot(output);
       free(output);
