@@ -19,7 +19,6 @@ debug: all
 mishegos:
 	$(MAKE) -C src/mishegos
 
-
 .PHONY: worker
 worker:
 	$(MAKE) -C src/worker
@@ -27,6 +26,10 @@ worker:
 .PHONY: fmt
 fmt:
 	clang-format -i -style=file $(ALL_SRCS)
+
+.PHONY: edit
+edit:
+	$(EDITOR) $(ALL_SRCS)
 
 .PHONY: clean
 clean:
