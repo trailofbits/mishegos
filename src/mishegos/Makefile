@@ -1,4 +1,4 @@
-SRCS = $(wildcard *.c)
+SRCS = $(wildcard *.c) $(wildcard ../vendor/*.c)
 OBJS = $(SRCS:.c=.o)
 
 PROG = mishegos

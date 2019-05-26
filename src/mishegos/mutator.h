@@ -5,6 +5,7 @@
 typedef enum {
   M_HAVOC = 0,
   M_SLIDING,
+  M_DUMMY,
 } mutator_mode;
 
 /* An x86 instruction's opcode is no longer than 3 bytes.

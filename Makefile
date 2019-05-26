@@ -1,10 +1,13 @@
-export CFLAGS := -std=gnu11 -Wall -Werror -pthread -I$(shell pwd)/src/include
+export CFLAGS := \
+	-std=gnu11 -Wall -Werror -pthread \
+	-I$(shell pwd)/src/include \
+	-I$(shell pwd)/src/vendor/include
 export LDLIBS := -ldl -lrt -lpthread
 export CPPFLAGS :=
 
 ALL_SRCS := $(shell \
-	find . -type f \( -path '*/capstone/capstone/*' \) -prune -o \
-	\( -name '*.c' -o -name '*.h' \) -print\
+	find . -type f \( -path '*/capstone/capstone/*' -o -path '*/vendor/*' \) -prune -o \
+	\( -name '*.c' -o -name '*.h' \) -print \
 )
 
 .PHONY: all

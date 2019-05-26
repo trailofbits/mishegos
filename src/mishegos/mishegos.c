@@ -1,13 +1,13 @@
 #include "mish_common.h"
 #include "mutator.h"
-#include "analysis.h"
+#include "cohorts.h"
 
 typedef struct {
   uint64_t islots;
   uint64_t oslots;
 } counters;
 
-static bool verbose;
+static bool verbose, debugging;
 static counters counts;
 static sig_atomic_t exiting;
 static worker workers[MISHEGOS_NWORKERS];
@@ -48,6 +48,7 @@ int main(int argc, char const *argv[]) {
   }
 
   verbose = (getenv("V") != NULL);
+  debugging = (getenv("D") != NULL);
 
   // Load workers from specification.
   load_worker_spec(argv[1]);
@@ -55,7 +56,7 @@ int main(int argc, char const *argv[]) {
   // Create shared memory, semaphores.
   mishegos_shm_init();
   mishegos_sem_init();
-  analysis_init();
+  cohorts_init();
 
   // Exit/cleanup behavior.
   atexit(cleanup);
@@ -64,7 +65,11 @@ int main(int argc, char const *argv[]) {
   signal(SIGABRT, exit_sig);
 
   // Configure the mutation engine.
-  set_mutator_mode(M_SLIDING);
+  if (debugging) {
+    set_mutator_mode(M_DUMMY);
+  } else {
+    set_mutator_mode(M_SLIDING);
+  }
 
   // Prep the input slots.
   arena_init();
@@ -226,7 +231,7 @@ static void cleanup() {
   sem_unlink(MISHEGOS_OUT_SEMNAME);
   sem_close(mishegos_osem);
 
-  analysis_cleanup();
+  cohorts_cleanup();
 }
 
 static void exit_sig(int signo) {
@@ -276,7 +281,7 @@ static void work() {
     DLOG("working...");
     do_inputs();
     do_output();
-    pump_cohorts();
+    dump_cohorts();
 
 #ifdef DEBUG
     sleep(1);
@@ -343,4 +348,20 @@ static void do_output() {
 
 done:
   sem_post(mishegos_osem);
+}
+
+const char *get_worker_so(uint32_t workerno) {
+  assert(workerno < MISHEGOS_NWORKERS);
+  return workers[workerno].so;
+}
+
+char *hexdump(input_slot *slot) {
+  assert(slot->len <= 15);
+  char *buf = malloc((slot->len * 2) + 1);
+
+  for (int i = 0; i < slot->len; ++i) {
+    sprintf(buf + (i * 2), "%02x", slot->raw_insn[i]);
+  }
+
+  return buf;
 }

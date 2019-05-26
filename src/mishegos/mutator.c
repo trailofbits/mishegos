@@ -199,6 +199,13 @@ static void sliding_candidate(input_slot *slot) {
   }
 }
 
+/* Dummy: Generates a single NOP for debugging purposes.
+ */
+static void dummy_candidate(input_slot *slot) {
+  slot->raw_insn[0] = 0x90;
+  slot->len = 1;
+}
+
 void set_mutator_mode(mutator_mode new_mode) {
   mut_mode = new_mode;
 }
@@ -211,6 +218,10 @@ void candidate(input_slot *slot) {
   }
   case M_SLIDING: {
     sliding_candidate(slot);
+    break;
+  }
+  case M_DUMMY: {
+    dummy_candidate(slot);
     break;
   }
   }

@@ -10,7 +10,9 @@
 #define DLOG(...)
 #define NDEBUG
 #define _unused(x) ((void)(x))
-#define hexputs(x, y)
+#define hexputs(x, y)                                                                              \
+  _unused(x);                                                                                      \
+  _unused(y)
 #endif
 
 #include <assert.h>
@@ -40,11 +42,20 @@
 #define MISHEGOS_INSN_MAXLEN 15
 #define MISHEGOS_DEC_MAXLEN 1018
 
-#define MISHEGOS_IN_NSLOTS 1
-#define MISHEGOS_OUT_NSLOTS 1
+#define MISHEGOS_IN_NSLOTS 2 // TODO(ww): Increase
+static_assert(MISHEGOS_IN_NSLOTS >= 2, "MISHEGOS_IN_NSLOTS should be >= 2");
+#define MISHEGOS_OUT_NSLOTS 1 // TODO(ww): Increase
 #define MISHEGOS_NWORKERS 2
 #define MISHEGOS_MAX_NWORKERS 31 // Size of our worker bitmask, minus 1 (to avoid UB).
-#define MISHEGOS_COHORT_NSLOTS 4
+static_assert(MISHEGOS_MAX_NWORKERS == 31, "MISHEGOS_MAX_NWORKERS cannot exceed 31");
+#define MISHEGOS_COHORT_NSLOTS 3 // TODO(ww): Increase
+/* NOTE(ww): If this seems a little weird, remember that there are up to
+ * MISHEGOS_IN_NSLOTS + MISHEGOS_OUT_NSLOTS outputs contesting for addition to
+ * a cohort. Without enough cohorts to make every in-flight output happy, we
+ * end up with a deadlock.
+ */
+static_assert(MISHEGOS_COHORT_NSLOTS >= MISHEGOS_IN_NSLOTS + MISHEGOS_OUT_NSLOTS,
+              "MISHEGOS_COHORT_NSLOTS should be >= MISHEGOS_IN_NSLOTS + MISHEGOS_OUT_NSLOTS");
 #define MISHEGOS_COHORT_SEMFMT "/mishegos_csem%d"
 #define MISHEGOS_IN_SEMFMT "/mishegos_isem%d"
 #define MISHEGOS_OUT_SEMNAME "/mishegos_osem"
@@ -140,3 +151,6 @@ static inline const char *status2str(decode_status status) {
     return "unknown";
   }
 }
+
+const char *get_worker_so(uint32_t workerno);
+char *hexdump(input_slot *slot);
