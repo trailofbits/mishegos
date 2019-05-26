@@ -41,7 +41,10 @@ void cohorts_cleanup() {
 
 bool add_to_cohort(output_slot *slot) {
   DLOG("checking cohort slots");
+
+#ifdef DEBUG
   sleep(1);
+#endif
 
   /* First pass: search the cohort slots to see if another worker
    * has produced an output for the same input as us.

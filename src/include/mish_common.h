@@ -125,9 +125,9 @@ typedef struct {
 
 static inline void _hexputs(uint8_t *buf, uint8_t len) {
   for (int i = 0; i < len; ++i) {
-    printf("%02x", buf[i]);
+    fprintf(stderr, "%02x", buf[i]);
   }
-  printf("\n");
+  fprintf(stderr, "\n");
 }
 
 static inline const char *status2str(decode_status status) {
