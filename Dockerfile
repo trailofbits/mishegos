@@ -5,6 +5,8 @@ RUN apt update && apt install -y build-essential binutils-dev
 WORKDIR /app/mishegos
 COPY ./ .
 
-RUN make debug
+ARG TARGET=all
+ARG BUILD_JOBS=4
+RUN make "${TARGET}" -j"${BUILD_JOBS}"
 
 CMD ["/bin/bash"]
