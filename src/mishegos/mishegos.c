@@ -64,25 +64,18 @@ int main(int argc, char const *argv[]) {
   atexit(cleanup);
 
   struct sigaction exit_action = {
-    .sa_handler = exit_sig,
+      .sa_handler = exit_sig,
   };
   sigaction(SIGINT, &exit_action, NULL);
   sigaction(SIGTERM, &exit_action, NULL);
   sigaction(SIGABRT, &exit_action, NULL);
 
   struct sigaction child_action = {
-    .sa_handler = child_sig,
+      .sa_handler = child_sig,
   };
   sigaction(SIGCHLD, &child_action, NULL);
 
-  // Configure the mutation engine.
-  if (debugging) {
-    set_mutator_mode(M_DUMMY);
-  } else {
-    set_mutator_mode(M_SLIDING);
-  }
-
-  // Prep the input slots.
+  // Prep the input slots and config.
   arena_init();
 
   // Start workers.
@@ -189,6 +182,19 @@ static void mishegos_sem_init() {
 static void arena_init() {
   /* Pre-worker start, so no need for semaphores.
    */
+
+  GET_CONFIG()->dec_mode = D_SINGLE;
+
+  if (debugging) {
+    GET_CONFIG()->mut_mode = M_DUMMY;
+  } else {
+    GET_CONFIG()->mut_mode = M_SLIDING;
+  }
+
+  /* TODO(ww): Remove this function and expose the config directly
+     to the mutation engine.
+   */
+  set_mutator_mode(GET_CONFIG()->mut_mode);
 
   /* Place an initial raw instruction candidate in each input slot.
    */
@@ -298,7 +304,7 @@ static void start_workers() {
 static void find_and_restart_dead_worker() {
   int status = 0;
 
-  pid_t wpid = waitpid((pid_t) -1, &status, WNOHANG);
+  pid_t wpid = waitpid((pid_t)-1, &status, WNOHANG);
   assert(wpid > 0 && "handling a dead worker but waitpid didn't get one?");
   assert(WIFSIGNALED(status) && "handling a dead worker but !WIFSIGNALED?");
 

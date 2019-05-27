@@ -16,14 +16,13 @@ void worker_dtor() {
   cs_close(&cs_hnd);
 }
 
-decode_result *try_decode(uint8_t *raw_insn, uint8_t length) {
-  cs_insn *insn;
-  size_t count;
-
+decode_result *try_decode(uint8_t *raw_insn, uint8_t length, decoder_mode mode) {
   decode_result *result = malloc(sizeof(decode_result));
   memset(result, 0, sizeof(decode_result));
 
-  count = cs_disasm(cs_hnd, raw_insn, length, 0, 0, &insn);
+  cs_insn *insn;
+  size_t dec_count = mode == D_SINGLE ? 1 : 0;
+  size_t count = cs_disasm(cs_hnd, raw_insn, length, 0, dec_count, &insn);
   if (count > 0) {
     result->status = S_SUCCESS;
 

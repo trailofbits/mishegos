@@ -61,15 +61,15 @@ int main(int argc, char const *argv[]) {
   atexit(cleanup);
 
   struct sigaction exit_action = {
-    .sa_handler = exit_sig,
+      .sa_handler = exit_sig,
   };
   sigaction(SIGINT, &exit_action, NULL);
   sigaction(SIGTERM, &exit_action, NULL);
   sigaction(SIGABRT, &exit_action, NULL);
 
   struct sigaction fault_action = {
-    .sa_handler = fault_sig,
-    .sa_flags = SA_RESETHAND,
+      .sa_handler = fault_sig,
+      .sa_flags = SA_RESETHAND,
   };
   sigaction(SIGSEGV, &fault_action, NULL);
   sigaction(SIGBUS, &fault_action, NULL);
@@ -210,7 +210,7 @@ static void work() {
 
     if (input != NULL) {
       if (sigsetjmp(fault_buf, 0) == 0) {
-        output_slot *output = try_decode(input->raw_insn, input->len);
+        output_slot *output = try_decode(input->raw_insn, input->len, GET_CONFIG()->dec_mode);
 
         /* Copy our input slot into our output slot, so that we can identify
          * individual runs.
@@ -230,9 +230,9 @@ static void work() {
          * and get out of dodge ASAP.
          */
         output_slot output = {
-          .input = *input,
-          .status = S_CRASH,
-          .workerno = workerno,
+            .input = *input,
+            .status = S_CRASH,
+            .workerno = workerno,
         };
         put_first_available_output_slot(&output);
 

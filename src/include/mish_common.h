@@ -63,24 +63,29 @@ static_assert(MISHEGOS_COHORT_NSLOTS >= MISHEGOS_IN_NSLOTS + MISHEGOS_OUT_NSLOTS
 
 #define MISHEGOS_SHMNAME "/mishegos_shm"
 #define MISHEGOS_SHMSIZE                                                                           \
-  ((MISHEGOS_IN_NSLOTS * sizeof(input_slot)) + (MISHEGOS_OUT_NSLOTS * sizeof(output_slot)))
+  ((sizeof(mishegos_config)) + (MISHEGOS_IN_NSLOTS * sizeof(input_slot)) +                         \
+   (MISHEGOS_OUT_NSLOTS * sizeof(output_slot)))
 
 #define GET_I_SEM(semno)                                                                           \
   (((mishegos_isems) && ((semno) < MISHEGOS_IN_NSLOTS)) ? mishegos_isems[slotno] : NULL)
 
+#define GET_CONFIG() ((mishegos_config *)(mishegos_arena))
+
 #define GET_I_SLOT(slotno)                                                                         \
   (((mishegos_arena) && ((slotno) < MISHEGOS_IN_NSLOTS))                                           \
-       ? (input_slot *)(mishegos_arena + (sizeof(input_slot) * slotno))                            \
+       ? (input_slot *)(mishegos_arena + (sizeof(mishegos_config)) +                               \
+                        (sizeof(input_slot) * slotno))                                             \
        : NULL)
 
 #define GET_O_SLOT(slotno)                                                                         \
   (((mishegos_arena) && ((slotno) < MISHEGOS_OUT_NSLOTS))                                          \
-       ? (output_slot *)(mishegos_arena + (sizeof(input_slot) * MISHEGOS_IN_NSLOTS) +              \
+       ? (output_slot *)(mishegos_arena + (sizeof(mishegos_config)) +                              \
+                         (sizeof(input_slot) * MISHEGOS_IN_NSLOTS) +                               \
                          (sizeof(output_slot) * slotno))                                           \
        : NULL)
 
 typedef enum {
-  S_NONE,
+  S_NONE = 0,
   S_SUCCESS,
   S_FAILURE,
   S_CRASH,
@@ -91,15 +96,27 @@ typedef enum {
 } decode_status;
 
 typedef enum {
-  A_SINGLE,
-  A_MULTIPLE,
-} analysis_kind;
+  D_SINGLE = 0,
+  D_MULTIPLE,
+} decoder_mode;
+
+typedef enum {
+  M_HAVOC = 0,
+  M_SLIDING,
+  M_DUMMY,
+} mutator_mode;
 
 typedef struct {
   char *so;
   pid_t pid;
   bool running;
 } worker;
+
+typedef struct __attribute__((packed)) {
+  decoder_mode dec_mode;
+  mutator_mode mut_mode;
+} mishegos_config;
+static_assert(sizeof(mishegos_config) == 8, "mishegos_config should be 8 bytes");
 
 typedef struct __attribute__((packed)) {
   uint32_t workers;
