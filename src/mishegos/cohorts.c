@@ -140,8 +140,12 @@ static void dump_cohort(output_cohort *cohort) {
     JSON_Value *output_value = json_value_init_object();
     JSON_Object *output = json_value_get_object(output_value);
 
-    json_object_set_string(output, "result", cohort->outputs[i].result);
     json_object_set_number(output, "len", cohort->outputs[i].len);
+    if (cohort->outputs[i].len > 0) {
+      json_object_set_string(output, "result", cohort->outputs[i].result);
+    } else {
+      json_object_set_null(output, "result");
+    }
     json_object_set_number(output, "workerno", cohort->outputs[i].workerno);
     json_object_set_number(output, "status", cohort->outputs[i].status);
     json_object_set_string(output, "status_name", status2str(cohort->outputs[i].status));
