@@ -53,7 +53,6 @@ bool add_to_cohort(output_slot *slot) {
   for (int i = 0; i < MISHEGOS_COHORT_NSLOTS; ++i) {
     sem_wait(mishegos_csems[i]);
 
-    DLOG("!!! cohorts[%d].workers=%d", i, cohorts[i].workers);
     int outputno = ffs(cohorts[i].workers);
     if (outputno == 0) {
       DLOG("pass 1: no worker outputs added to cohort slot=%d yet", i);

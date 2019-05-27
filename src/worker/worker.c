@@ -10,11 +10,13 @@ static try_decode_t try_decode;
 static sem_t *mishegos_isems[MISHEGOS_IN_NSLOTS];
 static sem_t *mishegos_osem;
 static uint8_t *mishegos_arena;
+static jmp_buf fault_buf;
 
 static void init_sems();
 static void init_shm();
 static void cleanup();
 static void exit_sig(int signo);
+static void fault_sig(int signo);
 static void work();
 
 int main(int argc, char const *argv[]) {
@@ -57,9 +59,21 @@ int main(int argc, char const *argv[]) {
   init_shm();
 
   atexit(cleanup);
-  signal(SIGINT, exit_sig);
-  signal(SIGTERM, exit_sig);
-  signal(SIGABRT, exit_sig);
+
+  struct sigaction exit_action = {
+    .sa_handler = exit_sig,
+  };
+  sigaction(SIGINT, &exit_action, NULL);
+  sigaction(SIGTERM, &exit_action, NULL);
+  sigaction(SIGABRT, &exit_action, NULL);
+
+  struct sigaction fault_action = {
+    .sa_handler = fault_sig,
+    .sa_flags = SA_RESETHAND,
+  };
+  sigaction(SIGSEGV, &fault_action, NULL);
+  sigaction(SIGBUS, &fault_action, NULL);
+  sigaction(SIGILL, &fault_action, NULL);
 
   work();
 
@@ -127,6 +141,10 @@ static void exit_sig(int signo) {
   exiting = true;
 }
 
+static void fault_sig(int signo) {
+  longjmp(fault_buf, 1);
+}
+
 static input_slot *get_first_new_input_slot() {
   input_slot *dest = NULL;
 
@@ -184,24 +202,45 @@ static void work() {
     sleep(1);
 #endif
 
+    /* NOTE(ww): I think this might have to be volatile to avoid UB
+     * with longjmp, but i'm not sure (maybe not since we don't modify it?).
+     * Making it volatile would break the memcpy and free below. YOLO.
+     */
     input_slot *input = get_first_new_input_slot();
 
     if (input != NULL) {
-      output_slot *output = try_decode(input->raw_insn, input->len);
+      if (sigsetjmp(fault_buf, 0) == 0) {
+        output_slot *output = try_decode(input->raw_insn, input->len);
 
-      /* Copy our input slot into our output slot, so that we can identify
-       * individual runs.
-       */
-      memcpy(&output->input, input, sizeof(input_slot));
-      free(input);
+        /* Copy our input slot into our output slot, so that we can identify
+         * individual runs.
+         */
+        memcpy(&output->input, input, sizeof(input_slot));
+        free(input);
 
-      /* Also put our worker number into the output slot, so we can index
-       * our worker cohort correctly.
-       */
-      output->workerno = workerno;
+        /* Also put our worker number into the output slot, so we can index
+         * our worker cohort correctly.
+         */
+        output->workerno = workerno;
 
-      put_first_available_output_slot(output);
-      free(output);
+        put_first_available_output_slot(output);
+        free(output);
+      } else {
+        /* Our worker has faulted. We need to create an S_CRASH output
+         * and get out of dodge ASAP.
+         */
+        output_slot output = {
+          .input = *input,
+          .status = S_CRASH,
+          .workerno = workerno,
+        };
+        put_first_available_output_slot(&output);
+
+        /* Doesn't actually matter which signal we raise here as long as it
+         * causes termination (which it will, since is registered with SA_RESETHAND).
+         */
+        raise(SIGSEGV);
+      }
     }
   }
 

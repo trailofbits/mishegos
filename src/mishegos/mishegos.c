@@ -10,6 +10,7 @@ typedef struct {
 static bool verbose, debugging;
 static counters counts;
 static sig_atomic_t exiting;
+static sig_atomic_t worker_died;
 static worker workers[MISHEGOS_NWORKERS];
 static sem_t *mishegos_isems[MISHEGOS_IN_NSLOTS];
 static sem_t *mishegos_osem;
@@ -21,6 +22,7 @@ static void mishegos_shm_init();
 static void mishegos_sem_init();
 static void cleanup();
 static void exit_sig(int signo);
+static void child_sig(int signo);
 static void arena_init();
 static void start_workers();
 static void work();
@@ -60,9 +62,18 @@ int main(int argc, char const *argv[]) {
 
   // Exit/cleanup behavior.
   atexit(cleanup);
-  signal(SIGINT, exit_sig);
-  signal(SIGTERM, exit_sig);
-  signal(SIGABRT, exit_sig);
+
+  struct sigaction exit_action = {
+    .sa_handler = exit_sig,
+  };
+  sigaction(SIGINT, &exit_action, NULL);
+  sigaction(SIGTERM, &exit_action, NULL);
+  sigaction(SIGABRT, &exit_action, NULL);
+
+  struct sigaction child_action = {
+    .sa_handler = child_sig,
+  };
+  sigaction(SIGCHLD, &child_action, NULL);
 
   // Configure the mutation engine.
   if (debugging) {
@@ -123,8 +134,7 @@ static void load_worker_spec(char const *spec) {
       continue;
     }
 
-    workers[i].no = i;
-    DLOG("got worker %d so: %s", workers[1].no, workers[i].so);
+    DLOG("got worker %d so: %s", i, workers[i].so);
     i++;
   }
 
@@ -238,37 +248,80 @@ static void exit_sig(int signo) {
   exiting = true;
 }
 
-static void start_workers() {
-  for (int i = 0; i < MISHEGOS_NWORKERS; ++i) {
-    DLOG("starting worker=%d with so=%s", i, workers[i].so);
+static void child_sig(int signo) {
+  /* No point in handling a crashed worker if we're exiting.
+   */
+  if (!exiting) {
+    /* See the NOTE in work(). This doesn't solve the problem, just makes
+     * it easier to confirm when debugging.
+     */
+    assert(!worker_died);
+    worker_died = true;
+  }
+}
 
-    pid_t pid;
-    switch (pid = fork()) {
-    case 0: { // Child.
-      char workerno_s[32] = {};
-      snprintf(workerno_s, sizeof(workerno_s), "%d", workers[i].no);
-      // TODO(ww): Should be configurable.
-      if (execl("./src/worker/worker", "worker", workerno_s, workers[i].so, NULL) < 0) {
-        // TODO(ww): Signal to the parent that we failed to spawn.
-        err(errno, "execl");
-      }
-      break;
+static void start_worker(int workerno) {
+  assert(workerno < MISHEGOS_NWORKERS && "workerno out of bounds");
+  DLOG("starting worker=%d with so=%s", workerno, workers[workerno].so);
+
+  pid_t pid;
+  switch (pid = fork()) {
+  case 0: { // Child.
+    char workerno_s[32] = {};
+    snprintf(workerno_s, sizeof(workerno_s), "%d", workerno);
+    // TODO(ww): Should be configurable.
+    if (execl("./src/worker/worker", "worker", workerno_s, workers[workerno].so, NULL) < 0) {
+      // TODO(ww): Signal to the parent that we failed to spawn.
+      err(errno, "execl");
     }
-    case -1: { // Error.
-      err(errno, "fork");
+    break;
+  }
+  case -1: { // Error.
+    err(errno, "fork");
+    break;
+  }
+  default: { // Parent.
+    workers[workerno].pid = pid;
+    workers[workerno].running = true;
+    break;
+  }
+  }
+}
+
+static void start_workers() {
+  DLOG("starting workers");
+  for (int i = 0; i < MISHEGOS_NWORKERS; ++i) {
+    start_worker(i);
+  }
+}
+
+static void find_and_restart_dead_worker() {
+  int status = 0;
+
+  pid_t wpid = waitpid((pid_t) -1, &status, WNOHANG);
+  assert(wpid > 0 && "handling a dead worker but waitpid didn't get one?");
+  assert(WIFSIGNALED(status) && "handling a dead worker but !WIFSIGNALED?");
+
+  int workerno = -1;
+  for (int i = 0; i < MISHEGOS_NWORKERS; ++i) {
+    if (workers[i].pid == wpid) {
+      workerno = i;
       break;
-    }
-    default: { // Parent.
-      workers[i].pid = pid;
-      workers[i].running = true;
-      break;
-    }
     }
   }
+  assert(workerno >= 0 && "reaped a worker that's not in our worker table?");
+
+  /* Mark our crashed worker as not running, just in case we get
+   * signaled for cleanup between here and actually restarting it.
+   */
+  workers[workerno].running = false;
+  start_worker(workerno);
 }
 
 static void work() {
   while (!exiting) {
+    DLOG("working...");
+
     if (verbose) {
       if (counts.islots % 100 == 0) {
         VERBOSE("inputs processed: %lu", counts.islots);
@@ -278,7 +331,27 @@ static void work() {
       }
     }
 
-    DLOG("working...");
+    /* NOTE(ww): I'm pretty confident we could check for worker
+     * failure anywhere within the event loop, but it makes sense
+     * (to me) to have it right at the beginning.
+     *
+     * NOTE(ww): There's probably a pretty rare case getting missed here:
+     * if two workers happen to die at the same time (maybe even on the same input?),
+     * worker_died will be set to true twice and waitpid(-1, ...)
+     * will choose just one.
+     */
+    if (worker_died) {
+      DLOG("worker died! restarting...");
+      worker_died = false;
+      /* We expect our worker to clean up after itself, i.e. catch its own
+       * crash, put S_CRASH in its status, and re-raise the signal with default
+       * behavior to ensure that it gets propagated to us correctly. As a result,
+       * we don't need to do anything other than finding and restarting the
+       * appropriate worker.
+       */
+      find_and_restart_dead_worker();
+    }
+
     do_inputs();
     do_output();
     dump_cohorts();

@@ -33,6 +33,7 @@
 #include <sys/stat.h>
 #include <dlfcn.h>
 #include <sys/wait.h>
+#include <setjmp.h>
 
 #define VERBOSE(fmt, ...)                                                                          \
   if (verbose) {                                                                                   \
@@ -48,7 +49,7 @@ static_assert(MISHEGOS_IN_NSLOTS >= 2, "MISHEGOS_IN_NSLOTS should be >= 2");
 #define MISHEGOS_NWORKERS 2
 #define MISHEGOS_MAX_NWORKERS 31 // Size of our worker bitmask, minus 1 (to avoid UB).
 static_assert(MISHEGOS_MAX_NWORKERS == 31, "MISHEGOS_MAX_NWORKERS cannot exceed 31");
-#define MISHEGOS_COHORT_NSLOTS 3 // TODO(ww): Increase
+#define MISHEGOS_COHORT_NSLOTS 10
 /* NOTE(ww): If this seems a little weird, remember that there are up to
  * MISHEGOS_IN_NSLOTS + MISHEGOS_OUT_NSLOTS outputs contesting for addition to
  * a cohort. Without enough cohorts to make every in-flight output happy, we
@@ -95,7 +96,6 @@ typedef enum {
 } analysis_kind;
 
 typedef struct {
-  uint32_t no;
   char *so;
   pid_t pid;
   bool running;
