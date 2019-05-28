@@ -373,11 +373,16 @@ static void work() {
 static void do_inputs() {
   DLOG("checking input slots");
   for (int i = 0; i < MISHEGOS_IN_NSLOTS; ++i) {
+    /* NOTE(ww): Using sem_trywait results in a pretty nice performance
+     * boost within the workers, but degrades performance horrendously here.
+     * Why? Don't know. Maybe because syscall overhead exceeds waiting/lock
+     * evaluation here?
+     */
     sem_wait(mishegos_isems[i]);
 
     input_slot *slot = GET_I_SLOT(i);
     if (slot->workers != 0) {
-      DLOG("input slot#%d still waiting on worker(s)", i);
+      DLOG("input slot=%d still waiting on worker(s)", i);
       goto done;
     }
 
@@ -399,6 +404,8 @@ static void do_inputs() {
 static void do_output() {
   DLOG("checking output slot");
 
+  /* Same as above; sem_trywait doesn't help here.
+   */
   sem_wait(mishegos_osem);
 
   output_slot *slot = GET_O_SLOT(0);

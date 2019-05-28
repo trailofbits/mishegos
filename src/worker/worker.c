@@ -149,7 +149,11 @@ static input_slot *get_first_new_input_slot() {
   input_slot *dest = NULL;
 
   for (int i = 0; i < MISHEGOS_IN_NSLOTS && dest == NULL; ++i) {
-    sem_wait(mishegos_isems[i]);
+    if (sem_trywait(mishegos_isems[i]) < 0) {
+      assert(errno == EAGAIN);
+      DLOG("input slot=%d being processed elsewhere", i);
+      continue;
+    }
 
     input_slot *slot = GET_I_SLOT(i);
     if (!(slot->workers & (1 << workerno))) {
@@ -178,7 +182,12 @@ static void put_first_available_output_slot(output_slot *slot) {
 #ifdef DEBUG
     sleep(1);
 #endif
-    sem_wait(mishegos_osem);
+
+    if (sem_trywait(mishegos_osem) < 0) {
+      assert(errno == EAGAIN);
+      DLOG("output slot=%d being processed elsewhere", 0);
+      continue;
+    }
 
     output_slot *dest = GET_O_SLOT(0);
     if (dest->status != S_NONE) {
