@@ -1,7 +1,4 @@
-#include <sys/random.h>
-#include <string.h>
-
-#include "mutator.h"
+#include "mish_core.h"
 
 static mutator_mode mut_mode;
 static insn_candidate insn_cand;
@@ -206,8 +203,8 @@ static void dummy_candidate(input_slot *slot) {
   slot->len = 1;
 }
 
-void set_mutator_mode(mutator_mode new_mode) {
-  mut_mode = new_mode;
+void mutator_init() {
+  mut_mode = GET_CONFIG()->mut_mode;
 }
 
 void candidate(input_slot *slot) {

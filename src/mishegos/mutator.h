@@ -1,6 +1,6 @@
 #pragma once
 
-#include "mish_common.h"
+#include "mish_core.h"
 
 /* An x86 instruction's opcode is no longer than 3 bytes.
  */
@@ -31,5 +31,5 @@ typedef struct {
   uint8_t insn[26];
 } insn_candidate;
 
-void set_mutator_mode(mutator_mode new_mode);
+void mutator_init();
 void candidate(input_slot *slot);

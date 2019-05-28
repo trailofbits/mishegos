@@ -1,11 +1,11 @@
-#include "mish_common.h"
-#include "mutator.h"
-#include "cohorts.h"
+#include "mish_core.h"
 
 typedef struct {
   uint64_t islots;
   uint64_t oslots;
 } counters;
+
+uint8_t *mishegos_arena;
 
 static bool verbose, debugging;
 static counters counts;
@@ -14,15 +14,14 @@ static sig_atomic_t worker_died;
 static worker workers[MISHEGOS_NWORKERS];
 static sem_t *mishegos_isems[MISHEGOS_IN_NSLOTS];
 static sem_t *mishegos_osem;
-static uint8_t *mishegos_arena;
 
-static void test();
 static void load_worker_spec(char const *spec);
 static void mishegos_shm_init();
 static void mishegos_sem_init();
 static void cleanup();
 static void exit_sig(int signo);
 static void child_sig(int signo);
+static void config_init();
 static void arena_init();
 static void start_workers();
 static void work();
@@ -35,16 +34,11 @@ int main(int argc, char const *argv[]) {
            "Arguments:\n"
            "\t<spec> The worker specification to load from\n"
            "Options:\n"
-           "\t-Xm\tMutator testing mode (sanity check)\n"
            "\t-Xc\tRun cleanup routines only\n");
     return 0;
   }
 
-  if (strcmp(argv[1], "-Xm") == 0) {
-    DLOG("mutation testing mode");
-    test();
-    return 0;
-  } else if (strcmp(argv[1], "-Xc") == 0) {
+  if (strcmp(argv[1], "-Xc") == 0) {
     cleanup();
     return 0;
   }
@@ -52,15 +46,17 @@ int main(int argc, char const *argv[]) {
   verbose = (getenv("V") != NULL);
   debugging = (getenv("D") != NULL);
 
-  // Load workers from specification.
+  /* Load workers from specification.
+   */
   load_worker_spec(argv[1]);
 
-  // Create shared memory, semaphores.
+  /* Create shared memory, semaphores.
+   */
   mishegos_shm_init();
   mishegos_sem_init();
-  cohorts_init();
 
-  // Exit/cleanup behavior.
+  /* Exit/cleanup behavior.
+   */
   atexit(cleanup);
 
   struct sigaction exit_action = {
@@ -75,33 +71,26 @@ int main(int argc, char const *argv[]) {
   };
   sigaction(SIGCHLD, &child_action, NULL);
 
-  // Prep the input slots and config.
+  /* Prep input slots, config, cohort collector and mutation engine.
+   *
+   * NOTE(ww): These methods assume that the shared memory has been initialized;
+   * calling them before mishegos_shm_init would be very bad. The order is also
+   * important: config_init should be called before any of the others.
+   */
+  config_init();
   arena_init();
+  cohorts_init();
+  mutator_init();
 
-  // Start workers.
+  /* Start workers.
+   */
   start_workers();
 
-  // Work until stopped.
+  /* Work until stopped.
+   */
   work();
+
   return 0;
-}
-
-static void test() {
-  input_slot slot;
-
-  puts("test 1: havoc mode");
-  set_mutator_mode(M_HAVOC);
-  for (int i = 0; i < 5; ++i) {
-    candidate(&slot);
-    hexputs(slot.raw_insn, slot.len);
-  }
-
-  puts("test 2: sliding mode");
-  set_mutator_mode(M_SLIDING);
-  for (int i = 0; i < 5; ++i) {
-    candidate(&slot);
-    hexputs(slot.raw_insn, slot.len);
-  }
 }
 
 static void load_worker_spec(char const *spec) {
@@ -179,10 +168,7 @@ static void mishegos_sem_init() {
   DLOG("mishegos_osem=%p", mishegos_osem);
 }
 
-static void arena_init() {
-  /* Pre-worker start, so no need for semaphores.
-   */
-
+static void config_init() {
   GET_CONFIG()->dec_mode = D_SINGLE;
 
   if (debugging) {
@@ -190,11 +176,11 @@ static void arena_init() {
   } else {
     GET_CONFIG()->mut_mode = M_SLIDING;
   }
+}
 
-  /* TODO(ww): Remove this function and expose the config directly
-     to the mutation engine.
+static void arena_init() {
+  /* Pre-worker start, so no need for semaphores.
    */
-  set_mutator_mode(GET_CONFIG()->mut_mode);
 
   /* Place an initial raw instruction candidate in each input slot.
    */
@@ -329,10 +315,10 @@ static void work() {
     DLOG("working...");
 
     if (verbose) {
-      if (counts.islots % 100 == 0) {
+      if (counts.islots % 1000 == 0) {
         VERBOSE("inputs processed: %lu", counts.islots);
       }
-      if (counts.oslots % 100 == 0) {
+      if (counts.oslots % 1000 == 0) {
         VERBOSE("outputs processed: %lu", counts.oslots);
       }
     }
@@ -423,14 +409,6 @@ static void do_output() {
    */
   slot->status = S_NONE;
   counts.oslots++;
-
-  // DLOG("result for input: ");
-  // hexputs(slot->input.raw_insn, slot->input.len);
-  // if (slot->status == S_FAILURE) {
-  //   DLOG("result: failure");
-  // } else {
-  //   DLOG("result: %s\n%.*s", status2str(slot->status), (int)slot->len, slot->result);
-  // }
 
 done:
   sem_post(mishegos_osem);
