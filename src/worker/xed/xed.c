@@ -19,6 +19,8 @@ decode_result *try_decode(uint8_t *raw_insn, uint8_t length, decoder_mode mode) 
   decode_result *result = malloc(sizeof(decode_result));
   memset(result, 0, sizeof(decode_result));
 
+  /* TODO(ww): Support mode == D_MULTIPLE.
+   */
   xed_error_enum_t xed_error = xed_decode(&xedd, raw_insn, length);
   if (xed_error != XED_ERROR_NONE) {
     DLOG("xed_decode failed: %s", xed_error_enum_t2str(xed_error));
