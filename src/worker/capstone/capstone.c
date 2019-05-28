@@ -27,12 +27,15 @@ decode_result *try_decode(uint8_t *raw_insn, uint8_t length, decoder_mode mode) 
     result->status = S_SUCCESS;
 
     size_t off = 0;
+    size_t pc = 0;
     for (size_t i = 0; i < count; ++i) {
       assert(off < MISHEGOS_DEC_MAXLEN);
       off += snprintf(result->result + off, MISHEGOS_DEC_MAXLEN - off, "%s %s\n", insn[i].mnemonic,
                       insn[i].op_str);
+      pc += insn[i].size;
     }
     result->len = off;
+    result->ndecoded = pc;
 
     cs_free(insn, count);
   } else {

@@ -71,10 +71,11 @@ decode_result *try_decode(uint8_t *raw_insn, uint8_t length, decoder_mode mode) 
   disassemble_init_for_target(&disasm_info);
 
   memset(disasm_buf, 0, MISHEGOS_DEC_MAXLEN);
-  disasm_off = 0;
 
+  size_t insn_size;
+  disasm_off = 0;
   do {
-    size_t insn_size = disasm(pc, &disasm_info);
+    insn_size = disasm(pc, &disasm_info);
 
     /* Make sure each instruction is on its own line in the disassembly buffer.
      */
@@ -85,28 +86,20 @@ decode_result *try_decode(uint8_t *raw_insn, uint8_t length, decoder_mode mode) 
 
     pc += insn_size;
     insn_count++;
-  } while (pc < length && mode != D_SINGLE);
+  } while (insn_size > 0 && pc < length && mode != D_SINGLE);
 
   decode_result *result = malloc(sizeof(decode_result));
   memset(result, 0, sizeof(decode_result));
 
-  /* TODO(ww): Scan for "(bad)" in disassembled output,
-   * that's our only real indication that libopcodes failed.
-   */
-  if (pc == length && insn_count > 0) {
-    result->status = S_SUCCESS;
-  } else if (pc == length && insn_count == 0) {
-    result->status = S_WOULDBLOCK;
-  } else if (pc < length && pc > 0 && insn_count != 0) {
-    result->status = S_PARTIAL;
-  } else if (pc == 0) {
+  if (pc <= 0 || insn_count == 0 || strstr(disasm_buf, "(bad)") != NULL) {
     result->status = S_FAILURE;
   } else {
-    result->status = S_UNKNOWN;
+    result->status = S_SUCCESS;
   }
 
   memcpy(result->result, disasm_buf, disasm_off);
   result->len = disasm_off;
+  result->ndecoded = pc;
 
   return result;
 }
