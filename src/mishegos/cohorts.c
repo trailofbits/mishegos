@@ -172,7 +172,7 @@ void dump_cohorts() {
     sem_wait(mishegos_csems[i]);
 
     if (cohorts[i].workers != ~(~0 << MISHEGOS_NWORKERS)) {
-      DLOG("skipping incomplete cohort (workers=%d, expected=%d)", cohorts[i].workers,
+      DLOG("skipping incomplete cohort (worker mask=%d, expected=%d)", cohorts[i].workers,
            ~(~0 << MISHEGOS_NWORKERS));
       /* Slot not fully populated.
        */
@@ -189,7 +189,6 @@ void dump_cohorts() {
      * slots, since only the mask gets checked.
      */
     cohorts[i].workers = 0;
-    memset(&cohorts[i], 0, sizeof(output_cohort));
 
     /* We're using our copy, so we can remove the lock
      * before actually dumping the cohort.
