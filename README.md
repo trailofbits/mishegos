@@ -34,3 +34,19 @@ make debug
 ```
 ./src/mishegos/mishegos ./workers.spec
 ```
+
+## TODO
+
+* Performance improvements
+    * Either break cohort collection out into a separate process or remove cohort semaphores
+    * Avoid `longjmp`/`setjmp` for error recovery within worker processes
+    * Maybe use a better data structure for input/output/cohort slots
+* Pre-analysis normalization (whitespace, immediate representation, prefixes)
+* Analysis strategies:
+    * Filter by length, decode status discrepancies
+    * Easy: lexical comparison
+    * Easy: reassembly + effects modeling (maybe with microx?)
+* Scoring ideas:
+    * Low value: Flag/prefix discrepancies
+    * Medium value: Decode success/failure/crash discrepancies
+    * High value: Decode discrepancies with differing control flow, operands, maybe some immediates
