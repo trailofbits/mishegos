@@ -1,3 +1,9 @@
 [submodule "src/worker/capstone/capstone"]
 	path = src/worker/capstone/capstone
 	url = git@github.com:aquynh/capstone.git
+[submodule "src/worker/xed/xed"]
+	path = src/worker/xed/xed
+	url = git@github.com:intelxed/xed.git
+[submodule "src/worker/xed/mbuild"]
+	path = src/worker/xed/mbuild
+	url = git@github.com:intelxed/mbuild.git

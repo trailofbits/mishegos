@@ -1,6 +1,6 @@
 FROM ubuntu:latest
 
-RUN apt update && apt install -y build-essential binutils-dev
+RUN apt update && apt install -y build-essential binutils-dev python
 
 WORKDIR /app/mishegos
 COPY ./ .

@@ -1,5 +1,6 @@
 WORKERS = bfd \
-					capstone
+	capstone \
+	xed
 
 .PHONY: all
 all: worker $(WORKERS)

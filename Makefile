@@ -6,7 +6,14 @@ export LDLIBS := -ldl -lrt -lpthread
 export CPPFLAGS :=
 
 ALL_SRCS := $(shell \
-	find . -type f \( -path '*/capstone/capstone/*' -o -path '*/vendor/*' \) -prune -o \
+	find . -type f \
+	\( \
+		-path '*/capstone/capstone/*' -o \
+		-path '*/vendor/*' -o \
+		-path '*/xed/xed/*' -o \
+		-path '*/xed/mbuild/*' \
+	\) \
+	-prune -o \
 	\( -name '*.c' -o -name '*.h' \) -print \
 )
 

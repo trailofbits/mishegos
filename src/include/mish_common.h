@@ -47,7 +47,7 @@
 #define MISHEGOS_IN_NSLOTS 2 // TODO(ww): Increase
 static_assert(MISHEGOS_IN_NSLOTS >= 2, "MISHEGOS_IN_NSLOTS should be >= 2");
 #define MISHEGOS_OUT_NSLOTS 1 // TODO(ww): Increase
-#define MISHEGOS_NWORKERS 2
+#define MISHEGOS_NWORKERS 3
 #define MISHEGOS_MAX_NWORKERS 31 // Size of our worker bitmask, minus 1 (to avoid UB).
 static_assert(MISHEGOS_MAX_NWORKERS == 31, "MISHEGOS_MAX_NWORKERS cannot exceed 31");
 #define MISHEGOS_COHORT_NSLOTS 10
@@ -100,6 +100,11 @@ typedef enum {
   D_SINGLE = 0,
   D_MULTIPLE,
 } decoder_mode;
+
+typedef enum {
+  F_INTEL = 0,
+  F_ATT,
+} decoder_format;
 
 typedef enum {
   M_HAVOC = 0,
