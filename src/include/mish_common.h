@@ -47,6 +47,9 @@
 #define MISHEGOS_IN_NSLOTS 4 // TODO(ww): Increase
 static_assert(MISHEGOS_IN_NSLOTS >= 2, "MISHEGOS_IN_NSLOTS should be >= 2");
 #define MISHEGOS_OUT_NSLOTS 1 // TODO(ww): Increase
+/* TODO(ww): Remove this and replace it with an nworkers field stored in
+ * mishegos_config.
+ */
 #define MISHEGOS_NWORKERS 4
 #define MISHEGOS_MAX_NWORKERS 31 // Size of our worker bitmask, minus 1 (to avoid UB).
 static_assert(MISHEGOS_MAX_NWORKERS == 31, "MISHEGOS_MAX_NWORKERS cannot exceed 31");

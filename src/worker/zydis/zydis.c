@@ -7,7 +7,7 @@ char *worker_name = "zydis";
 static ZydisDecoder zdecoder;
 static ZydisFormatter zformatter;
 
-/* I couldn't find this defined anywhere in zycode/zydis.
+/* I couldn't find this defined anywhere in zycore/zydis.
  */
 static const char *ZyanStatus_strerror(ZyanStatus zstatus) {
   switch (zstatus) {
