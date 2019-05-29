@@ -292,7 +292,14 @@ static void find_and_restart_dead_worker() {
 
   pid_t wpid = waitpid((pid_t)-1, &status, WNOHANG);
   assert(wpid > 0 && "handling a dead worker but waitpid didn't get one?");
-  assert(WIFSIGNALED(status) && "handling a dead worker but !WIFSIGNALED?");
+
+  /* If worker exits on us without signaling abnormal termination,
+   * that *probably* means it failed during initialization. If that's the case,
+   * we should just exit, since it probably won't restart correctly.
+   */
+  if (!WIFSIGNALED(status)) {
+    errx(1, "treating unsignaled dead worker as an init failure and exiting...");
+  }
 
   int workerno = -1;
   for (int i = 0; i < MISHEGOS_NWORKERS; ++i) {

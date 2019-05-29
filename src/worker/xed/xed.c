@@ -8,10 +8,11 @@ void worker_ctor() {
   xed_tables_init();
 }
 
-void worker_dtor() {
-}
-
 decode_result *try_decode(uint8_t *raw_insn, uint8_t length, decoder_mode mode) {
+  /* TODO(ww): Support mode == D_MULTIPLE.
+   */
+  assert(mode == D_SINGLE);
+
   xed_decoded_inst_t xedd;
   xed_decoded_inst_zero(&xedd);
   xed_decoded_inst_set_mode(&xedd, XED_MACHINE_MODE_LONG_64, XED_ADDRESS_WIDTH_64b);
@@ -19,8 +20,6 @@ decode_result *try_decode(uint8_t *raw_insn, uint8_t length, decoder_mode mode) 
   decode_result *result = malloc(sizeof(decode_result));
   memset(result, 0, sizeof(decode_result));
 
-  /* TODO(ww): Support mode == D_MULTIPLE.
-   */
   xed_error_enum_t xed_error = xed_decode(&xedd, raw_insn, length);
   if (xed_error != XED_ERROR_NONE) {
     DLOG("xed_decode failed: %s", xed_error_enum_t2str(xed_error));

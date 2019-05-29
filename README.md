@@ -41,6 +41,7 @@ make debug
     * Either break cohort collection out into a separate process or remove cohort semaphores
     * Avoid `longjmp`/`setjmp` for error recovery within worker processes
     * Maybe use a better data structure for input/output/cohort slots
+    * Allow more than one output slot
 * Pre-analysis normalization (whitespace, immediate representation, prefixes)
 * Analysis strategies:
     * Filter by length, decode status discrepancies

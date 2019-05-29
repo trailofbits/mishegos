@@ -11,7 +11,8 @@ ALL_SRCS := $(shell \
 		-path '*/capstone/capstone/*' -o \
 		-path '*/vendor/*' -o \
 		-path '*/xed/xed/*' -o \
-		-path '*/xed/mbuild/*' \
+		-path '*/xed/mbuild/*' -o \
+		-path '*/zydis/zydis/*' \
 	\) \
 	-prune -o \
 	\( -name '*.c' -o -name '*.h' \) -print \

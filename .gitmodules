@@ -7,3 +7,6 @@
 [submodule "src/worker/xed/mbuild"]
 	path = src/worker/xed/mbuild
 	url = git@github.com:intelxed/mbuild.git
+[submodule "src/worker/zydis/zydis"]
+	path = src/worker/zydis/zydis
+	url = git@github.com:zyantific/zydis.git

@@ -6,7 +6,7 @@ static insn_candidate insn_cand;
 /* An x86 instruction can have up to 4 legacy prefixes,
  * in any order, with no more than 1 prefix from each group.
  */
-uint8_t legacy_prefixes[] = {
+static uint8_t legacy_prefixes[] = {
     // Prefix group 1.
     0xf0, // repeat/lock
     0xf3, // rep, repe
@@ -30,7 +30,7 @@ uint8_t legacy_prefixes[] = {
  *
  * Each instruction should only have one REX prefix.
  */
-uint8_t rex_prefixes[] = {
+static uint8_t rex_prefixes[] = {
     0b01000000, // ----
     0b01000001, // ---B
     0b01000010, // --X-
