@@ -8,7 +8,7 @@ static void (*worker_ctor)();
 static void (*worker_dtor)();
 static try_decode_t try_decode;
 static sem_t *mishegos_isems[MISHEGOS_IN_NSLOTS];
-static sem_t *mishegos_osem;
+static sem_t *mishegos_osems[MISHEGOS_OUT_NSLOTS];
 static uint8_t *mishegos_arena;
 static jmp_buf fault_buf;
 
@@ -93,12 +93,17 @@ static void init_sems() {
     DLOG("mishegos_isems[%d]=%p", i, mishegos_isems[i]);
   }
 
-  mishegos_osem = sem_open(MISHEGOS_OUT_SEMNAME, O_RDWR, 0644, 1);
-  if (mishegos_osem == SEM_FAILED) {
-    err(errno, "sem_open: %s", MISHEGOS_OUT_SEMNAME);
-  }
+  for (int i = 0; i < MISHEGOS_OUT_NSLOTS; ++i) {
+    char sem_name[NAME_MAX + 1] = {};
+    snprintf(sem_name, sizeof(sem_name), MISHEGOS_OUT_SEMFMT, i);
 
-  DLOG("mishegos_osem=%p", mishegos_osem);
+    mishegos_osems[i] = sem_open(sem_name, O_RDWR, 0644, 1);
+    if (mishegos_osems[i] == SEM_FAILED) {
+      err(errno, "sem_open: %s", sem_name);
+    }
+
+    DLOG("mishegos_osems[%d]=%p", i, mishegos_osems[i]);
+  }
 }
 
 static void init_shm() {
@@ -129,12 +134,12 @@ static void cleanup() {
   munmap(mishegos_arena, MISHEGOS_SHMSIZE);
 
   for (int i = 0; i < MISHEGOS_IN_NSLOTS; ++i) {
-    char sem_name[NAME_MAX + 1] = {};
-    snprintf(sem_name, sizeof(sem_name), MISHEGOS_IN_SEMFMT, i);
     sem_close(mishegos_isems[i]);
   }
 
-  sem_close(mishegos_osem);
+  for (int i = 0; i < MISHEGOS_OUT_NSLOTS; ++i) {
+    sem_close(mishegos_osems[i]);
+  }
 }
 
 static void exit_sig(int signo) {
@@ -182,24 +187,25 @@ static void put_first_available_output_slot(output_slot *slot) {
 #ifdef DEBUG
     sleep(1);
 #endif
+    for (int i = 0; i < MISHEGOS_OUT_NSLOTS; ++i) {
+      if (sem_trywait(mishegos_osems[i]) < 0) {
+        assert(errno == EAGAIN);
+        DLOG("output slot=%d being processed elsewhere", i);
+        continue;
+      }
 
-    if (sem_trywait(mishegos_osem) < 0) {
-      assert(errno == EAGAIN);
-      DLOG("output slot=%d being processed elsewhere", 0);
-      continue;
+      output_slot *dest = GET_O_SLOT(i);
+      if (dest->status != S_NONE) {
+        DLOG("output slot=%d occupied", i);
+        goto done;
+      }
+
+      memcpy(dest, slot, sizeof(output_slot));
+      available = true;
+
+    done:
+      sem_post(mishegos_osems[i]);
     }
-
-    output_slot *dest = GET_O_SLOT(0);
-    if (dest->status != S_NONE) {
-      DLOG("output slot=%d occupied", 0);
-      goto done;
-    }
-
-    memcpy(dest, slot, sizeof(output_slot));
-    available = true;
-
-  done:
-    sem_post(mishegos_osem);
   }
 }
 

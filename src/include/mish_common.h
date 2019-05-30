@@ -46,7 +46,7 @@
 
 #define MISHEGOS_IN_NSLOTS 4 // TODO(ww): Increase
 static_assert(MISHEGOS_IN_NSLOTS >= 2, "MISHEGOS_IN_NSLOTS should be >= 2");
-#define MISHEGOS_OUT_NSLOTS 1 // TODO(ww): Increase
+#define MISHEGOS_OUT_NSLOTS 4 // TODO(ww): Increase
 /* TODO(ww): Remove this and replace it with an nworkers field stored in
  * mishegos_config.
  */
@@ -63,7 +63,7 @@ static_assert(MISHEGOS_COHORT_NSLOTS >= MISHEGOS_IN_NSLOTS + MISHEGOS_OUT_NSLOTS
               "MISHEGOS_COHORT_NSLOTS should be >= MISHEGOS_IN_NSLOTS + MISHEGOS_OUT_NSLOTS");
 #define MISHEGOS_COHORT_SEMFMT "/mishegos_csem%d"
 #define MISHEGOS_IN_SEMFMT "/mishegos_isem%d"
-#define MISHEGOS_OUT_SEMNAME "/mishegos_osem"
+#define MISHEGOS_OUT_SEMFMT "/mishegos_osem%d"
 
 #define MISHEGOS_SHMNAME "/mishegos_shm"
 #define MISHEGOS_SHMSIZE                                                                           \

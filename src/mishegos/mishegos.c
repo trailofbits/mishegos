@@ -13,7 +13,7 @@ static sig_atomic_t exiting;
 static sig_atomic_t worker_died;
 static worker workers[MISHEGOS_NWORKERS];
 static sem_t *mishegos_isems[MISHEGOS_IN_NSLOTS];
-static sem_t *mishegos_osem;
+static sem_t *mishegos_osems[MISHEGOS_OUT_NSLOTS];
 
 static void load_worker_spec(char const *spec);
 static void mishegos_shm_init();
@@ -26,7 +26,7 @@ static void arena_init();
 static void start_workers();
 static void work();
 static void do_inputs();
-static void do_output();
+static void do_outputs();
 
 int main(int argc, char const *argv[]) {
   if (argc != 2 || strcmp(argv[1], "-h") == 0) {
@@ -160,12 +160,17 @@ static void mishegos_sem_init() {
     DLOG("mishegos_isems[%d]=%p", i, mishegos_isems[i]);
   }
 
-  mishegos_osem = sem_open(MISHEGOS_OUT_SEMNAME, O_RDWR | O_CREAT | O_EXCL, 0644, 1);
-  if (mishegos_osem == SEM_FAILED) {
-    err(errno, "sem_open: %s", MISHEGOS_OUT_SEMNAME);
-  }
+  for (int i = 0; i < MISHEGOS_OUT_NSLOTS; ++i) {
+    char sem_name[NAME_MAX + 1] = {};
+    snprintf(sem_name, sizeof(sem_name), MISHEGOS_OUT_SEMFMT, i);
 
-  DLOG("mishegos_osem=%p", mishegos_osem);
+    mishegos_osems[i] = sem_open(sem_name, O_RDWR | O_CREAT | O_EXCL, 0644, 1);
+    if (mishegos_osems[i] == SEM_FAILED) {
+      err(errno, "sem_open: %s", sem_name);
+    }
+
+    DLOG("mishegos_osems[%d]=%p", i, mishegos_osems[i]);
+  }
 }
 
 static void config_init() {
@@ -196,11 +201,13 @@ static void arena_init() {
     hexputs(slot->raw_insn, slot->len);
   }
 
-  /* Mark our output slot as having no result so that we kick things
+  /* Mark our output slots as having no result, so that we kick things
    * off in the right state.
    */
-  output_slot *slot = GET_O_SLOT(0);
-  slot->status = S_NONE;
+  for (int i = 0; i < MISHEGOS_OUT_NSLOTS; ++i) {
+    output_slot *slot = GET_O_SLOT(i);
+    slot->status = S_NONE;
+  }
 
   DLOG("mishegos_arena=%p (len=%ld)", mishegos_arena, MISHEGOS_SHMSIZE);
 }
@@ -230,8 +237,13 @@ static void cleanup() {
     sem_close(mishegos_isems[i]);
   }
 
-  sem_unlink(MISHEGOS_OUT_SEMNAME);
-  sem_close(mishegos_osem);
+  for (int i = 0; i < MISHEGOS_OUT_NSLOTS; ++i) {
+    char sem_name[NAME_MAX + 1] = {};
+    snprintf(sem_name, sizeof(sem_name), MISHEGOS_OUT_SEMFMT, i);
+
+    sem_unlink(sem_name);
+    sem_close(mishegos_osems[i]);
+  }
 
   cohorts_cleanup();
 }
@@ -352,7 +364,7 @@ static void work() {
     }
 
     do_inputs();
-    do_output();
+    do_outputs();
     dump_cohorts();
 
 #ifdef DEBUG
@@ -394,31 +406,33 @@ static void do_inputs() {
   }
 }
 
-static void do_output() {
-  DLOG("checking output slot");
+static void do_outputs() {
+  DLOG("checking output slots");
 
-  /* Same as above; sem_trywait doesn't help here.
-   */
-  sem_wait(mishegos_osem);
+  for (int i = 0; i < MISHEGOS_OUT_NSLOTS; ++i) {
+    /* Same as above; sem_trywait doesn't help here.
+     */
+    sem_wait(mishegos_osems[i]);
 
-  output_slot *slot = GET_O_SLOT(0);
-  if (slot->status == S_NONE) {
-    DLOG("output slot still waiting on a result");
-    goto done;
+    output_slot *slot = GET_O_SLOT(0);
+    if (slot->status == S_NONE) {
+      DLOG("output slot still waiting on a result");
+      goto done;
+    }
+
+    if (!add_to_cohort(slot)) {
+      DLOG("output slot still waiting on a cohort slot");
+      goto done;
+    }
+
+    /* Mark the output slot as available.
+     */
+    slot->status = S_NONE;
+    counts.oslots++;
+
+  done:
+    sem_post(mishegos_osems[i]);
   }
-
-  if (!add_to_cohort(slot)) {
-    DLOG("output slot still waiting on a cohort slot");
-    goto done;
-  }
-
-  /* Mark the output slot as available.
-   */
-  slot->status = S_NONE;
-  counts.oslots++;
-
-done:
-  sem_post(mishegos_osem);
 }
 
 const char *get_worker_so(uint32_t workerno) {
