@@ -8,7 +8,7 @@ A haphazard x86 decoder fuzzer.
 Start with a clone, including submodules:
 
 ```bash
-git clone --recursive-submodules -j$(nproc) https://github.com/trailofbits/mishegos
+git clone --recurse-submodules https://github.com/trailofbits/mishegos
 ```
 
 ### Building
