@@ -1,5 +1,6 @@
 #include "mish_core.h"
 
+static uint64_t rng_state[4];
 static mutator_mode mut_mode;
 static insn_candidate insn_cand;
 
@@ -49,11 +50,48 @@ static uint8_t rex_prefixes[] = {
     0b01001111, // WRXB
 };
 
-static uint8_t rand_byte() {
-  uint8_t b;
-  getrandom(&b, 1, 0);
-  return b;
+#ifndef NO_XOROSHIRO_RNG
+static inline uint64_t xoroshiro256_rotl(const uint64_t x, int k) {
+  return (x << k) | (x >> (64 - k));
 }
+
+uint64_t xoroshiro256_next(void) {
+  const uint64_t result_starstar = xoroshiro256_rotl(rng_state[1] * 5, 7) * 9;
+
+  const uint64_t t = rng_state[1] << 17;
+
+  rng_state[2] ^= rng_state[0];
+  rng_state[3] ^= rng_state[1];
+  rng_state[1] ^= rng_state[2];
+  rng_state[0] ^= rng_state[3];
+
+  rng_state[2] ^= t;
+
+  rng_state[3] = xoroshiro256_rotl(rng_state[3], 45);
+
+  return result_starstar;
+}
+
+static inline uint64_t rand_long() {
+  return xoroshiro256_next();
+}
+
+static inline uint8_t rand_byte() {
+  return (uint8_t)rand_long();
+}
+#else
+static uint64_t rand_long() {
+  uint64_t it;
+  getrandom(&it, sizeof(it), 0);
+  return it;
+}
+
+static uint8_t rand_byte() {
+  uint8_t it;
+  getrandom(&it, sizeof(it), 0);
+  return it;
+}
+#endif
 
 /* Creates a random (potentially invalid) opcode.
  * Opcodes are 1-3 bytes long, and come in three formats:
@@ -140,8 +178,7 @@ static void build_sliding_candidate() {
    */
   if (rand_byte() % 2 == 0) {
     uint8_t displen = 1 << (rand_byte() % 4);
-    uint64_t disp;
-    getrandom(&disp, displen, 0);
+    uint64_t disp = rand_long();
     memcpy(insn_cand.insn + insn_cand.len, &disp, displen);
     insn_cand.len += displen;
   }
@@ -150,8 +187,7 @@ static void build_sliding_candidate() {
    */
   if (rand_byte() % 2 == 0) {
     uint8_t immlen = 1 << (rand_byte() % 4);
-    uint64_t imm;
-    getrandom(&imm, immlen, 0);
+    uint64_t imm = rand_long();
     memcpy(insn_cand.insn + insn_cand.len, &imm, immlen);
     insn_cand.len += immlen;
   }
@@ -161,7 +197,10 @@ static void build_sliding_candidate() {
  */
 static void havoc_candidate(input_slot *slot) {
   slot->len = (rand_byte() % MISHEGOS_INSN_MAXLEN) + 1;
-  getrandom(slot->raw_insn, slot->len, 0);
+  uint64_t lower = rand_long();
+  uint64_t upper = rand_long();
+  memcpy(slot->raw_insn, &lower, 8);
+  memcpy(slot->raw_insn + 8, &upper, 7);
 }
 
 /* Sliding: generate an instruction candidate with the
@@ -204,6 +243,10 @@ static void dummy_candidate(input_slot *slot) {
 }
 
 void mutator_init() {
+  DLOG("initializing the mutation engine");
+  memcpy(rng_state, GET_CONFIG()->rng_seed, sizeof(rng_state));
+  DLOG("rng seed:");
+  hexputs((uint8_t *)rng_state, sizeof(rng_state));
   mut_mode = GET_CONFIG()->mut_mode;
 }
 

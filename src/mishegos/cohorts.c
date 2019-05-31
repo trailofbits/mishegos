@@ -19,10 +19,6 @@ void cohorts_cleanup() {
 bool add_to_cohort(output_slot *slot) {
   DLOG("checking cohort slots");
 
-#ifdef DEBUG
-  sleep(1);
-#endif
-
   /* First pass: search the cohort slots to see if another worker
    * has produced an output for the same input as us.
    */
@@ -39,6 +35,7 @@ bool add_to_cohort(output_slot *slot) {
     if (slot->input.len != output.input.len ||
         memcmp(slot->input.raw_insn, output.input.raw_insn, output.input.len) != 0) {
       DLOG("skipping non-matching cohort slot=%d", i);
+#ifdef DEBUG
       {
         char *tmp1, *tmp2;
         tmp1 = hexdump(&output.input);
@@ -47,6 +44,7 @@ bool add_to_cohort(output_slot *slot) {
         free(tmp1);
         free(tmp2);
       }
+#endif
       continue;
     }
 
@@ -60,7 +58,6 @@ bool add_to_cohort(output_slot *slot) {
 
     if (inserted) {
       DLOG("inserted worker output=%d into preexisting cohort slot=%d", slot->workerno, i);
-      hexputs(slot->input.raw_insn, slot->input.len);
       return true;
     }
   }
@@ -78,7 +75,6 @@ bool add_to_cohort(output_slot *slot) {
     cohorts[i].workers ^= (1 << slot->workerno);
 
     DLOG("inserted worker output=%d into fresh cohort slot=%d", slot->workerno, i);
-    hexputs(slot->input.raw_insn, slot->input.len);
     return true;
   }
 

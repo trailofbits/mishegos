@@ -44,16 +44,16 @@
 #define MISHEGOS_INSN_MAXLEN 15
 #define MISHEGOS_DEC_MAXLEN 1018
 
-#define MISHEGOS_IN_NSLOTS 4 // TODO(ww): Increase
+#define MISHEGOS_IN_NSLOTS 10 // TODO(ww): Increase
 static_assert(MISHEGOS_IN_NSLOTS >= 2, "MISHEGOS_IN_NSLOTS should be >= 2");
-#define MISHEGOS_OUT_NSLOTS 4 // TODO(ww): Increase
+#define MISHEGOS_OUT_NSLOTS 50 // TODO(ww): Increase
 /* TODO(ww): Remove this and replace it with an nworkers field stored in
  * mishegos_config.
  */
 #define MISHEGOS_NWORKERS 4
 #define MISHEGOS_MAX_NWORKERS 31 // Size of our worker bitmask, minus 1 (to avoid UB).
 static_assert(MISHEGOS_MAX_NWORKERS == 31, "MISHEGOS_MAX_NWORKERS cannot exceed 31");
-#define MISHEGOS_COHORT_NSLOTS 10
+#define MISHEGOS_COHORT_NSLOTS 60
 /* NOTE(ww): If this seems a little weird, remember that there are up to
  * MISHEGOS_IN_NSLOTS + MISHEGOS_OUT_NSLOTS outputs contesting for addition to
  * a cohort. Without enough cohorts to make every in-flight output happy, we
@@ -122,10 +122,11 @@ typedef struct {
 } worker;
 
 typedef struct __attribute__((packed)) {
+  uint64_t rng_seed[4];
   decoder_mode dec_mode;
   mutator_mode mut_mode;
 } mishegos_config;
-static_assert(sizeof(mishegos_config) == 8, "mishegos_config should be 8 bytes");
+static_assert(sizeof(mishegos_config) == 40, "mishegos_config should be 40 bytes");
 
 typedef struct __attribute__((packed)) {
   uint32_t workers;

@@ -184,19 +184,16 @@ static void put_first_available_output_slot(output_slot *slot) {
   bool available = false;
 
   while (!available && !exiting) {
-#ifdef DEBUG
-    sleep(1);
-#endif
     for (int i = 0; i < MISHEGOS_OUT_NSLOTS; ++i) {
       if (sem_trywait(mishegos_osems[i]) < 0) {
         assert(errno == EAGAIN);
-        DLOG("output slot=%d being processed elsewhere", i);
+        DLOG("%s: output slot=%d being processed elsewhere", worker_name, i);
         continue;
       }
 
       output_slot *dest = GET_O_SLOT(i);
       if (dest->status != S_NONE) {
-        DLOG("output slot=%d occupied", i);
+        DLOG("%s: output slot=%d occupied", worker_name, i);
         goto done;
       }
 
@@ -212,11 +209,6 @@ static void put_first_available_output_slot(output_slot *slot) {
 static void work() {
   while (!exiting) {
     DLOG("%s working...", worker_name);
-
-#ifdef DEBUG
-    sleep(1);
-#endif
-
     /* NOTE(ww): I think this might have to be volatile to avoid UB
      * with longjmp, but i'm not sure (maybe not since we don't modify it?).
      * Making it volatile would break the memcpy and free below. YOLO.

@@ -14,7 +14,7 @@ zydis/build/libZydis.a:
 	mkdir build
 	cd build
 	cmake ..
-	cmake --build .
+	cmake --build . -- -j4
 
 zydis.so: zydis.o
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) \

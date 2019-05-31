@@ -78,9 +78,9 @@ int main(int argc, char const *argv[]) {
    * important: config_init should be called before any of the others.
    */
   config_init();
+  mutator_init();
   arena_init();
   cohorts_init();
-  mutator_init();
 
   /* Start workers.
    */
@@ -174,6 +174,10 @@ static void mishegos_sem_init() {
 }
 
 static void config_init() {
+  /* TODO(ww): Configurable RNG seed.
+   */
+  getrandom(GET_CONFIG()->rng_seed, sizeof(GET_CONFIG()->rng_seed), 0);
+
   GET_CONFIG()->dec_mode = D_SINGLE;
 
   if (debugging) {
@@ -275,7 +279,6 @@ static void start_worker(int workerno) {
     snprintf(workerno_s, sizeof(workerno_s), "%d", workerno);
     // TODO(ww): Should be configurable.
     if (execl("./src/worker/worker", "worker", workerno_s, workers[workerno].so, NULL) < 0) {
-      // TODO(ww): Signal to the parent that we failed to spawn.
       err(errno, "execl");
     }
     break;
@@ -366,10 +369,6 @@ static void work() {
     do_inputs();
     do_outputs();
     dump_cohorts();
-
-#ifdef DEBUG
-    sleep(1);
-#endif
   }
 
   DLOG("exiting...");
@@ -377,7 +376,12 @@ static void work() {
 
 static void do_inputs() {
   DLOG("checking input slots");
-  for (int i = 0; i < MISHEGOS_IN_NSLOTS; ++i) {
+
+  /* This reverse loop is a silly optimization: our workers each contend
+     for slot semaphores in ascending order, so we balance things out a bit
+     by contending in descending order. Same for output slots.
+   */
+  for (int i = MISHEGOS_IN_NSLOTS - 1; i >= 0; i--) {
     /* NOTE(ww): Using sem_trywait results in a pretty nice performance
      * boost within the workers, but degrades performance horrendously here.
      * Why? Don't know. Maybe because syscall overhead exceeds waiting/lock
@@ -409,9 +413,7 @@ static void do_inputs() {
 static void do_outputs() {
   DLOG("checking output slots");
 
-  for (int i = 0; i < MISHEGOS_OUT_NSLOTS; ++i) {
-    /* Same as above; sem_trywait doesn't help here.
-     */
+  for (int i = MISHEGOS_OUT_NSLOTS - 1; i >= 0; i--) {
     sem_wait(mishegos_osems[i]);
 
     output_slot *slot = GET_O_SLOT(0);
