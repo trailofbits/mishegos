@@ -41,7 +41,10 @@ make debug
     * Either break cohort collection out into a separate process or remove cohort semaphores
     * Avoid `longjmp`/`setjmp` for error recovery within worker processes
     * Maybe use a better data structure for input/output/cohort slots
-    * Allow more than one output slot
+    * Randomly choose to iterate over slots in different orders, to avoid hammering the lower slots
+* Add more workers:
+    * https://github.com/vmt/udis86
+* Add a scaling factor for workers, e.g. spawn `N` of each worker
 * Pre-analysis normalization (whitespace, immediate representation, prefixes)
 * Analysis strategies:
     * Filter by length, decode status discrepancies
