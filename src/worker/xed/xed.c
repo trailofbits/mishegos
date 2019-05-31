@@ -8,7 +8,7 @@ void worker_ctor() {
   xed_tables_init();
 }
 
-decode_result *try_decode(uint8_t *raw_insn, uint8_t length, decoder_mode mode) {
+void try_decode(decode_result *result, uint8_t *raw_insn, uint8_t length, decoder_mode mode) {
   /* TODO(ww): Support mode == D_MULTIPLE.
    */
   assert(mode == D_SINGLE);
@@ -16,9 +16,6 @@ decode_result *try_decode(uint8_t *raw_insn, uint8_t length, decoder_mode mode) 
   xed_decoded_inst_t xedd;
   xed_decoded_inst_zero(&xedd);
   xed_decoded_inst_set_mode(&xedd, XED_MACHINE_MODE_LONG_64, XED_ADDRESS_WIDTH_64b);
-
-  decode_result *result = malloc(sizeof(decode_result));
-  memset(result, 0, sizeof(decode_result));
 
   xed_error_enum_t xed_error = xed_decode(&xedd, raw_insn, length);
   if (xed_error != XED_ERROR_NONE) {
@@ -32,7 +29,7 @@ decode_result *try_decode(uint8_t *raw_insn, uint8_t length, decoder_mode mode) 
     } else {
       result->status = S_FAILURE;
     }
-    return result;
+    return;
   }
 
   /* TODO(ww): Fixure out whether xed_format_context decodes up to MISHEGOS_DEC_MAXLEN,
@@ -45,12 +42,10 @@ decode_result *try_decode(uint8_t *raw_insn, uint8_t length, decoder_mode mode) 
      * failure above.
      */
     result->status = S_FAILURE;
-    return result;
+    return;
   }
 
   result->status = S_SUCCESS;
   result->len = strlen(result->result);
   result->ndecoded = xed_decoded_inst_get_length(&xedd);
-
-  return result;
 }

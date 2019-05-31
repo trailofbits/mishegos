@@ -59,21 +59,18 @@ void worker_ctor() {
    */
 }
 
-decode_result *try_decode(uint8_t *raw_insn, uint8_t length, decoder_mode mode) {
+void try_decode(decode_result *result, uint8_t *raw_insn, uint8_t length, decoder_mode mode) {
   /* TODO(ww): Support mode == D_MULTIPLE.
    */
   assert(mode == D_SINGLE);
   _unused(ZyanStatus_strerror);
-
-  decode_result *result = malloc(sizeof(decode_result));
-  memset(result, 0, sizeof(decode_result));
 
   ZydisDecodedInstruction insn;
   ZyanStatus zstatus = ZydisDecoderDecodeBuffer(&zdecoder, raw_insn, length, &insn);
   if (!ZYAN_SUCCESS(zstatus)) {
     DLOG("zydis decoding failed: %s", ZyanStatus_strerror(zstatus));
     result->status = S_FAILURE;
-    return result;
+    return;
   }
 
   zstatus =
@@ -81,11 +78,10 @@ decode_result *try_decode(uint8_t *raw_insn, uint8_t length, decoder_mode mode) 
   if (!ZYAN_SUCCESS(zstatus)) {
     DLOG("zydis formatting failed: %s", ZyanStatus_strerror(zstatus));
     result->status = S_FAILURE;
-    return result;
+    return;
   }
 
   result->status = S_SUCCESS;
   result->len = strlen(result->result);
   result->ndecoded = insn.length;
-  return result;
 }

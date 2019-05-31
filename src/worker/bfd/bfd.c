@@ -49,7 +49,7 @@ void worker_ctor() {
   init_dis();
 }
 
-decode_result *try_decode(uint8_t *raw_insn, uint8_t length, decoder_mode mode) {
+void try_decode(decode_result *result, uint8_t *raw_insn, uint8_t length, decoder_mode mode) {
   size_t pc = 0;
   size_t insn_count = 0;
 
@@ -88,9 +88,6 @@ decode_result *try_decode(uint8_t *raw_insn, uint8_t length, decoder_mode mode) 
     insn_count++;
   } while (insn_size > 0 && pc < length && mode != D_SINGLE);
 
-  decode_result *result = malloc(sizeof(decode_result));
-  memset(result, 0, sizeof(decode_result));
-
   if (pc <= 0 || insn_count == 0 || strstr(disasm_buf, "(bad)") != NULL) {
     result->status = S_FAILURE;
   } else {
@@ -100,6 +97,4 @@ decode_result *try_decode(uint8_t *raw_insn, uint8_t length, decoder_mode mode) 
   memcpy(result->result, disasm_buf, disasm_off);
   result->len = disasm_off;
   result->ndecoded = pc;
-
-  return result;
 }
