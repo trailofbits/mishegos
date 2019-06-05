@@ -35,13 +35,29 @@ make debug
 ./src/mishegos/mishegos ./workers.spec
 ```
 
+### Performance notes
+
+All numbers below correspond to the following run:
+
+```
+V=1 timeout 60s ./src/mishegos/mishegos ./workers.spec > /tmp/mishegos
+```
+
+Within Docker:
+
+* On a Linux server (40 cores, 128GB RAM):
+    * 3.5M outputs/minute
+    * 5 cores pinned
+* On a 2018 Macbook Pro (2+2 cores, 16GB RAM):
+    * 300K outputs/minute
+    * (All) 4 cores pinned
+
 ## TODO
 
 * Performance improvements
-    * Either break cohort collection out into a separate process or remove cohort semaphores
+    * Break cohort collection out into a separate process (requires re-addition of semaphores)
     * Avoid `longjmp`/`setjmp` for error recovery within worker processes
     * Maybe use a better data structure for input/output/cohort slots
-    * Randomly choose to iterate over slots in different orders, to avoid hammering the lower slots
 * Add more workers:
     * https://github.com/vmt/udis86
 * Add a scaling factor for workers, e.g. spawn `N` of each worker
@@ -54,3 +70,6 @@ make debug
     * Low value: Flag/prefix discrepancies
     * Medium value: Decode success/failure/crash discrepancies
     * High value: Decode discrepancies with differing control flow, operands, maybe some immediates
+* Visualization ideas:
+    * Really basic: an HTML table, with color-coded cells
+    * Basic but not really basic: some kind of mouse-over differential visualization
