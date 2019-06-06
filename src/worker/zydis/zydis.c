@@ -69,7 +69,12 @@ void try_decode(decode_result *result, uint8_t *raw_insn, uint8_t length, decode
   ZyanStatus zstatus = ZydisDecoderDecodeBuffer(&zdecoder, raw_insn, length, &insn);
   if (!ZYAN_SUCCESS(zstatus)) {
     DLOG("zydis decoding failed: %s", ZyanStatus_strerror(zstatus));
-    result->status = S_FAILURE;
+
+    if (zstatus == ZYDIS_STATUS_NO_MORE_DATA) {
+      result->status = S_PARTIAL;
+    } else {
+      result->status = S_FAILURE;
+    }
     return;
   }
 
