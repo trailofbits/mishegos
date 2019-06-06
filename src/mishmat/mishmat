@@ -1,0 +1,122 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# mishmat: Generate a matrix visualization of mishegos results in HTML
+
+require "erb"
+require "optparse"
+require "json"
+
+COLOR_TABLE = Hash.new("#808080").update(
+  "success" => "#00FF00",
+  "failure" => "#FF0000",
+  "none" => "#0000FF",
+  "unknown" => "#4B0082"
+)
+
+HEADER = <<~HTML
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta charset="utf-8">
+      <meta generator="mishmash (mishegos)">
+      <meta timestamp="#{Time.now.to_i}">
+      <style type="text/css">
+        table, th, td {
+          border: 1px solid black;
+        }
+
+        th, td {
+          text-align: left;
+        }
+      </style>
+    </head>
+
+  <body>
+    <h1>mishmat (mishegos)</h1>
+    <table>
+HTML
+
+HEADER_ROWS = ERB.new <<~HTML
+  <tr>
+    <th>input</th>
+    <th colspan="100">worker</th>
+  </tr>
+
+  <tr>
+    <td></td>
+    <% row[:outputs].each do |col| %>
+      <td>
+        <%= col[:worker_so] %>
+      </td>
+    <% end %>
+  </tr>
+HTML
+
+ENTRY_ROW = ERB.new <<~HTML
+  <tr>
+    <td>
+      <%= row[:input] %>
+    </td>
+    <% row[:outputs].each do |col| %>
+      <td style="background-color: <%= COLOR_TABLE[col[:status_name]] %>">
+        <%= col[:result] %> (<%= col[:ndecoded] %> / <%= col[:len] %>)
+      </td>
+    <% end %>
+  </tr>
+HTML
+
+FOOTER = <<~HTML
+  </table>
+  </body>
+  </html>
+HTML
+
+OPTS = {
+  input: STDIN,
+  output: STDOUT,
+  limit: Float::INFINITY,
+}
+
+def write_header!(row)
+  OPTS[:output].puts HEADER
+  OPTS[:output].puts HEADER_ROWS.result(binding)
+end
+
+def write_footer!
+  OPTS[:output].puts FOOTER
+end
+
+def write_row!(row)
+  OPTS[:output].puts ENTRY_ROW.result(binding)
+end
+
+OptionParser.new do |o|
+  o.banner = "Usage: mishmat [options]"
+
+  o.on "-i", "--input INPUT", String, "Mishegos input" do |inp|
+    OPTS[:input] = File.open(inp, "r")
+  end
+
+  o.on "-o", "--output OUTPUT", String, "HTML output" do |out|
+    OPTS[:output] = File.open(out, "w")
+  end
+
+  o.on "-l", "--limit LIMIT", Integer, "Entry cap" do |limit|
+    OPTS[:limit] = limit
+  end
+end.parse!
+
+# Special-case the first row: We need to grab the figure out the appropriate number of
+# columns and their headers.
+row = JSON.parse OPTS[:input].gets, symbolize_names: true
+write_header! row
+write_row! row
+
+OPTS[:input].each_line.with_index do |line, i|
+  break if i >= OPTS[:limit]
+
+  write_row! JSON.parse(line, symbolize_names: true)
+end
+
+write_footer!
