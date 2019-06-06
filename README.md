@@ -1,7 +1,7 @@
 mishegos
 ========
 
-A haphazard x86 decoder fuzzer.
+A differential fuzzer for x86 decoders.
 
 ## Usage
 
