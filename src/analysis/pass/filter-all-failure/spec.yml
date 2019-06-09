@@ -1,0 +1,3 @@
+name: filter-all-failure
+desc: Remove all cohorts in which each worker failed
+run: filter-all-failure

@@ -1,0 +1,5 @@
+name: filter-ndecoded
+desc: Filter out any cohorts where all outputs consumed exactly the same number of input bytes
+run: filter-ndecoded
+not_before:
+  - filter-all-failure

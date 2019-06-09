@@ -1,0 +1,3 @@
+name: minimize-input
+desc: Trim each cohort's input to no greater than the longest output's decode length
+run: minimize-input

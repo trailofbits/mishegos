@@ -1,0 +1,5 @@
+name: normalize
+desc: Normalize analysis results
+run: normalize
+not_before:
+  - filter-all-failure

@@ -1,0 +1,29 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# filter-ndecoded: remove any cohorts where all outputs consumed
+# exactly the same number of input bytes.
+#
+# NOTE: Observe that "decoded the same number of bytes" is *not* the same
+# as "decoded to the same instruction". As such, this pass will probably produce
+# false negatives if your goal is to find instructions of the same size that decode
+# to different things.
+
+require "json"
+
+STDERR.puts "[+] pass: filter-ndecoded"
+
+count = 0
+STDIN.each_line do |line|
+  result = JSON.parse line, symbolize_names: true
+
+  outputs = result[:outputs]
+  if outputs.all? { |o| o[:ndecoded] == outputs.first[:ndecoded] }
+    count += 1
+    next
+  end
+
+  STDOUT.puts result.to_json
+end
+
+STDERR.puts "[+] pass: filter-ndecoded done: #{count} filtered"

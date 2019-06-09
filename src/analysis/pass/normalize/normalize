@@ -1,0 +1,28 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# normalize: perform some basic normalization of each worker's output
+
+require "json"
+
+STDERR.puts "[+] pass: normalize"
+
+STDIN.each_line do |line|
+  result = JSON.parse line, symbolize_names: true
+
+  result[:outputs].map! do |output|
+    next output if output[:result].nil?
+
+    normalized = output[:result].each_line.map do |dec_line|
+      dec_line.split.join(" ")
+    end.join("\n")
+
+    output[:result] = normalized
+    output[:len] = normalized.size
+    output
+  end
+
+  STDOUT.puts result.to_json
+end
+
+STDERR.puts "[+] pass: normalize done"

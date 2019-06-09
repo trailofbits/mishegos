@@ -1,0 +1,131 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# analysis: collect analysis passes, order them, and pipeline
+# mishegos results through them
+
+require "yaml"
+require "ostruct"
+require "pathname"
+require "set"
+require "open3"
+
+VERBOSE = ENV["VERBOSE"] || ENV["V"]
+PASS_DIR = Pathname.new File.expand_path("pass", __dir__)
+
+def hai(msg)
+  STDERR.puts "[analysis] #{msg}" if VERBOSE
+end
+
+def load_pass!(dir)
+  hai "loading pass from #{dir}"
+
+  spec = dir / "spec.yml"
+  raise "Pass missing spec: #{spec}" unless spec.file?
+
+  pass = OpenStruct.new YAML.load_file(spec)
+  pass.spec = spec
+  pass.dir = dir
+  pass.not_before ||= []
+  pass.cmd = pass.dir / pass.run
+
+  pass
+end
+
+# A mix-in for operations on all passes.
+module PassOperations
+  def build_graph!
+    graph = OpenStruct.new(nodes: [], edges: [])
+
+    each do |pass|
+      graph.nodes << pass
+
+      pass.not_before.each do |nb|
+        pred = find { |p| p.name == nb }
+        raise "#{pass.name} depends on missing pass: #{nb}" unless pred
+
+        graph.edges << [pred, pass]
+      end
+    end
+
+    graph
+  end
+
+  def verify!
+    hai "verifying #{size} passes"
+
+    raise "one or more duplicate pass names" if uniq(&:name).size != size
+    raise "one or more nonexecutable passes" unless all? { |p| p.cmd.executable? }
+
+    self
+  end
+
+  # This is just a topological sort of our pass DAG.
+  # Why? Nescio; sed fieri sentio et excrucior.
+  def order!
+    hai "realizing pass DAG into a concrete order"
+
+    graph = build_graph!
+    ordered = []
+    node_set = Set.new
+
+    # Our initial node set consists of only nodes that don't have a predecessor.
+    graph.nodes.each do |node|
+      next if graph.edges.any? { |e| e[1] == node }
+
+      node_set << node
+    end
+
+    until node_set.empty?
+      # There's probably a better way to sample a random node from the node set.
+      node = node_set.to_a.sample.tap { |n| node_set.delete n }
+      ordered << node
+
+      succ_nodes = graph.nodes.select { |s| graph.edges.include?([node, s]) }
+      succ_nodes.each do |succ|
+        graph.edges.delete [node, succ]
+        next if graph.edges.any? { |e| e[1] == succ }
+
+        node_set << succ
+      end
+    end
+
+    raise "pass DAG contains a cycle" unless graph.edges.empty?
+
+    replace ordered
+    self
+  end
+
+  def run!
+    hai "running passes: #{map(&:name)}"
+
+    cmds = map(&:cmd).map(&:to_s)
+    # Stupid hack: the last command in the pipeline
+    # needs to be told to use STDOUT as a sink explicitly
+    cmds[-1] = [cmds[-1], { out: STDOUT }]
+
+    Open3.pipeline_start(*cmds, in: STDIN)
+    Process.waitall
+
+    self
+  end
+end
+
+def order_passes!(_passes)
+  hai "ordering passes"
+end
+
+def run_passes!(_passes)
+  hai "running passes"
+end
+
+STDERR.sync = true
+
+hai "pass directory: #{PASS_DIR}"
+
+passes = PASS_DIR.children.select(&:directory?).map do |pass_dir|
+  load_pass! pass_dir
+end.to_set
+
+passes.extend PassOperations
+passes.verify!.order!.run!
