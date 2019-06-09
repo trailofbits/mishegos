@@ -73,5 +73,4 @@ Within Docker:
     * Medium value: Decode success/failure/crash discrepancies
     * High value: Decode discrepancies with differing control flow, operands, maybe some immediates
 * Visualization ideas:
-    * Really basic: an HTML table, with color-coded cells
     * Basic but not really basic: some kind of mouse-over differential visualization
