@@ -14,8 +14,8 @@ ALL_SRCS := $(shell \
 		-path '*/xed/mbuild/*' -o \
 		-path '*/zydis/zydis/*' \
 	\) \
-	-prune -o \
-	\( -name '*.c' -o -name '*.h' \) -print \
+	-prune \
+	-o \( -name '*.c' -o -name '*.h' -o -name 'Makefile' \) -print \
 )
 
 .PHONY: all
