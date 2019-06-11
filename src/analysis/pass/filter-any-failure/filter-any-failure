@@ -1,0 +1,22 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# filter-any-failure: remove any cohorts in which each worker failed
+
+require "json"
+
+STDERR.puts "[+] pass: filter-any-failure"
+
+count = 0
+STDIN.each_line do |line|
+  result = JSON.parse line, symbolize_names: true
+
+  if result[:outputs].any? { |o| o[:status_name] == "failure" }
+    count += 1
+    next
+  end
+
+  STDOUT.puts result.to_json
+end
+
+STDERR.puts "[+] pass: filter-any-failure done: #{count} filtered"

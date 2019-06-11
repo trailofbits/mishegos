@@ -1,0 +1,3 @@
+name: filter-ndecoded-different
+desc: Filter out any cohorts where one or more cohorts consumed different amounts of input
+run: filter-ndecoded-different
