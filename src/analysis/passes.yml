@@ -1,0 +1,22 @@
+default:
+  - filter-all-failure
+  - filter-ndecoded
+  - minimize-input
+  - normalize
+
+# Find inputs that all workers agree are one size, but one or more
+# decodes differently.
+same-size-different-decodings:
+  - filter-any-failure
+  - filter-ndecoded-different
+  - filter-same-effects
+  - minimize-input
+  - normalize
+
+# Find inputs that not all workers either succeed or fail on.
+status-discrepancies:
+  - filter-all-failure
+  - filter-all-success
+  - minimize-input
+  - normalize
+

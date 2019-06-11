@@ -100,12 +100,7 @@ module PassOperations
     hai "running passes: #{map(&:name)}"
 
     cmds = map(&:cmd).map(&:to_s)
-    # Stupid hack: the last command in the pipeline
-    # needs to be told to use STDOUT as a sink explicitly
-    cmds[-1] = [cmds[-1], { out: STDOUT }]
-
-    Open3.pipeline_start(*cmds, in: STDIN)
-    Process.waitall
+    Open3.pipeline(*cmds, in: STDIN, out: STDOUT)
 
     self
   end
