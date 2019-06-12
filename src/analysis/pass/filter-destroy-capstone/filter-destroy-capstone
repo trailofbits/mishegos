@@ -7,8 +7,8 @@ require "json"
 
 # TODO(ww): Remove this.
 CAPSTONE_SO = "./src/worker/capstone/capstone.so"
-XED_SO = "./src/worker/capstone/xed.so"
-ZYDIS_SO = "./src/worker/capstone/zydis.so"
+XED_SO = "./src/worker/xed/xed.so"
+ZYDIS_SO = "./src/worker/zydis/zydis.so"
 
 STDERR.puts "[+] pass: filter-destroy-capstone"
 
