@@ -20,3 +20,9 @@ status-discrepancies:
   - minimize-input
   - normalize
 
+destroy-capstone:
+  - filter-all-success
+  - filter-ndecoded
+  - filter-destroy-capstone
+  - minimize-input
+  - normalize
