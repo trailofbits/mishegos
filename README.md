@@ -33,15 +33,30 @@ make debug
 
 ### Running
 
-```
+Run the fuzzer for a bit:
+
+```bash
 ./src/mishegos/mishegos ./workers.spec
+```
+
+Run an analysis/filter pass group on the results:
+
+```bash
+./src/analysis/analysis -p same-size-different-decodings  < /tmp/mishegos > /tmp/mishegos.interesting
+```
+
+Generate an ~ugly~ pretty visualization of the filtered results:
+
+```bash
+./src/mishmat/mishmat < /tmp/mishegos.interesting > /tmp/mishegos.html
+open /tmp/mishegos.html
 ```
 
 ### Performance notes
 
 All numbers below correspond to the following run:
 
-```
+```bash
 V=1 timeout 60s ./src/mishegos/mishegos ./workers.spec > /tmp/mishegos
 ```
 
