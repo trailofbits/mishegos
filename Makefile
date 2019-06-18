@@ -38,6 +38,10 @@ worker:
 fmt:
 	clang-format -i -style=file $(ALL_SRCS)
 
+.PHONY: lint
+lint:
+	cppcheck --error-exitcode=1 $(ALL_SRCS)
+
 .PHONY: edit
 edit:
 	$(EDITOR) $(ALL_SRCS)
