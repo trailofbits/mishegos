@@ -1,6 +1,8 @@
 mishegos
 ========
 
+[![Build Status](https://travis-ci.com/trailofbits/mishegos.svg?token=DQQpqJG5gna6rypMg4Lk&branch=master)](https://travis-ci.com/trailofbits/mishegos)
+
 A differential fuzzer for x86 decoders.
 
 ![mishegos](https://user-images.githubusercontent.com/3059210/59005797-da89b400-87ec-11e9-8274-321edfa6df45.png)
