@@ -15,7 +15,7 @@ ALL_SRCS := $(shell \
 		-path '*/zydis/zydis/*' \
 	\) \
 	-prune \
-	-o \( -name '*.c' -o -name '*.h' -o -name 'Makefile' \) -print \
+	-o \( -name '*.c' -o -name '*.h' \) -print \
 )
 
 .PHONY: all
