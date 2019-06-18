@@ -210,10 +210,6 @@ static void put_first_available_output_slot() {
 static void work() {
   while (!exiting) {
     DLOG("%s working...", worker_name);
-    /* NOTE(ww): I think this might have to be volatile to avoid UB
-     * with longjmp, but i'm not sure (maybe not since we don't modify it?).
-     * Making it volatile would break the memcpy and free below. YOLO.
-     */
     if (get_first_new_input_slot()) {
       memset(&output, 0, sizeof(output_slot));
 
