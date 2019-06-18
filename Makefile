@@ -46,3 +46,7 @@ edit:
 clean:
 	$(MAKE) -C src/worker clean
 	$(MAKE) -C src/mishegos clean
+
+.PHONY: update-submodules
+update-submodules:
+	git submodule foreach git pull origin master
