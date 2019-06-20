@@ -77,6 +77,7 @@ Within Docker:
     * Break cohort collection out into a separate process (requires re-addition of semaphores)
     * Avoid `longjmp`/`setjmp` for error recovery within worker processes
     * Maybe use a better data structure for input/output/cohort slots
+    * Use a faster serialization format than JSON
 * Add more workers:
     * https://github.com/vmt/udis86
     * qemu's decoder
