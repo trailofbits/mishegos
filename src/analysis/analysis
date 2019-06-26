@@ -104,14 +104,6 @@ module PassOperations
   end
 end
 
-def order_passes!(_passes)
-  hai "ordering passes"
-end
-
-def run_passes!(_passes)
-  hai "running passes"
-end
-
 VERBOSE = ENV["VERBOSE"] || ENV["V"]
 PASS_DIR = Pathname.new File.expand_path("pass", __dir__)
 PASS_FILE = Pathname.new File.expand_path("passes.yml", __dir__)
