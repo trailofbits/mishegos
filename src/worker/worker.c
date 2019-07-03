@@ -62,20 +62,12 @@ int main(int argc, char const *argv[]) {
 
   atexit(cleanup);
 
-  struct sigaction exit_action = {
-      .sa_handler = exit_sig,
-  };
-  sigaction(SIGINT, &exit_action, NULL);
-  sigaction(SIGTERM, &exit_action, NULL);
-  sigaction(SIGABRT, &exit_action, NULL);
-
-  struct sigaction fault_action = {
-      .sa_handler = fault_sig,
-      .sa_flags = SA_RESETHAND,
-  };
-  sigaction(SIGSEGV, &fault_action, NULL);
-  sigaction(SIGBUS, &fault_action, NULL);
-  sigaction(SIGILL, &fault_action, NULL);
+  sigaction(SIGINT, &(struct sigaction){.sa_handler = exit_sig}, NULL);
+  sigaction(SIGTERM, &(struct sigaction){.sa_handler = exit_sig}, NULL);
+  sigaction(SIGABRT, &(struct sigaction){.sa_handler = exit_sig}, NULL);
+  sigaction(SIGSEGV, &(struct sigaction){.sa_handler = fault_sig}, NULL);
+  sigaction(SIGBUS, &(struct sigaction){.sa_handler = fault_sig}, NULL);
+  sigaction(SIGILL, &(struct sigaction){.sa_handler = fault_sig}, NULL);
 
   work();
 

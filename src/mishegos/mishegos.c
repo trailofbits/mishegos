@@ -59,17 +59,10 @@ int main(int argc, char const *argv[]) {
    */
   atexit(cleanup);
 
-  struct sigaction exit_action = {
-      .sa_handler = exit_sig,
-  };
-  sigaction(SIGINT, &exit_action, NULL);
-  sigaction(SIGTERM, &exit_action, NULL);
-  sigaction(SIGABRT, &exit_action, NULL);
-
-  struct sigaction child_action = {
-      .sa_handler = child_sig,
-  };
-  sigaction(SIGCHLD, &child_action, NULL);
+  sigaction(SIGINT, &(struct sigaction){.sa_handler = exit_sig}, NULL);
+  sigaction(SIGTERM, &(struct sigaction){.sa_handler = exit_sig}, NULL);
+  sigaction(SIGABRT, &(struct sigaction){.sa_handler = exit_sig}, NULL);
+  sigaction(SIGCHLD, &(struct sigaction){.sa_handler = child_sig}, NULL);
 
   /* Prep input slots, config, cohort collector and mutation engine.
    *
