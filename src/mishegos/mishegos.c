@@ -171,8 +171,6 @@ static void config_init() {
    */
   getrandom(GET_CONFIG()->rng_seed, sizeof(GET_CONFIG()->rng_seed), 0);
 
-  GET_CONFIG()->dec_mode = D_SINGLE;
-
   if (debugging) {
     GET_CONFIG()->mut_mode = M_DUMMY;
   } else {

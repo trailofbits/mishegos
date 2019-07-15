@@ -16,23 +16,14 @@ void worker_dtor() {
   cs_close(&cs_hnd);
 }
 
-void try_decode(decode_result *result, uint8_t *raw_insn, uint8_t length, decoder_mode mode) {
+void try_decode(decode_result *result, uint8_t *raw_insn, uint8_t length) {
   cs_insn *insn;
-  size_t dec_count = mode == D_SINGLE ? 1 : 0;
-  size_t count = cs_disasm(cs_hnd, raw_insn, length, 0, dec_count, &insn);
+  size_t count = cs_disasm(cs_hnd, raw_insn, length, 0, 1, &insn);
   if (count > 0) {
     result->status = S_SUCCESS;
-
-    size_t off = 0;
-    size_t pc = 0;
-    for (size_t i = 0; i < count; ++i) {
-      assert(off < MISHEGOS_DEC_MAXLEN);
-      off += snprintf(result->result + off, MISHEGOS_DEC_MAXLEN - off, "%s %s\n", insn[i].mnemonic,
-                      insn[i].op_str);
-      pc += insn[i].size;
-    }
-    result->len = off;
-    result->ndecoded = pc;
+    result->len =
+        snprintf(result->result, MISHEGOS_DEC_MAXLEN, "%s %s\n", insn[0].mnemonic, insn[0].op_str);
+    result->ndecoded = insn[0].size;
 
     cs_free(insn, count);
   } else {

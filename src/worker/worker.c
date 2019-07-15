@@ -206,7 +206,7 @@ static void work() {
       memset(&output, 0, sizeof(output_slot));
 
       if (sigsetjmp(fault_buf, 0) == 0) {
-        try_decode(&output, input.raw_insn, input.len, GET_CONFIG()->dec_mode);
+        try_decode(&output, input.raw_insn, input.len);
 
         /* Copy our input slot into our output slot, so that we can identify
          * individual runs.

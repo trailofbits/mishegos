@@ -100,16 +100,6 @@ typedef enum {
 } decode_status;
 
 typedef enum {
-  D_SINGLE = 0,
-  D_MULTIPLE,
-} decoder_mode;
-
-typedef enum {
-  F_INTEL = 0,
-  F_ATT,
-} decoder_format;
-
-typedef enum {
   M_HAVOC = 0,
   M_SLIDING,
   M_DUMMY,
@@ -123,10 +113,9 @@ typedef struct {
 
 typedef struct __attribute__((packed)) {
   uint64_t rng_seed[4];
-  decoder_mode dec_mode;
   mutator_mode mut_mode;
 } mishegos_config;
-static_assert(sizeof(mishegos_config) == 40, "mishegos_config should be 40 bytes");
+static_assert(sizeof(mishegos_config) == 36, "mishegos_config should be 36 bytes");
 
 typedef struct __attribute__((packed)) {
   uint32_t workers;

@@ -8,11 +8,7 @@ void worker_ctor() {
   xed_tables_init();
 }
 
-void try_decode(decode_result *result, uint8_t *raw_insn, uint8_t length, decoder_mode mode) {
-  /* TODO(ww): Support mode == D_MULTIPLE.
-   */
-  assert(mode == D_SINGLE);
-
+void try_decode(decode_result *result, uint8_t *raw_insn, uint8_t length) {
   xed_decoded_inst_t xedd;
   xed_decoded_inst_zero(&xedd);
   xed_decoded_inst_set_mode(&xedd, XED_MACHINE_MODE_LONG_64, XED_ADDRESS_WIDTH_64b);

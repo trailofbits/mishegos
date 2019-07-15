@@ -49,10 +49,7 @@ void worker_ctor() {
   init_dis();
 }
 
-void try_decode(decode_result *result, uint8_t *raw_insn, uint8_t length, decoder_mode mode) {
-  size_t pc = 0;
-  size_t insn_count = 0;
-
+void try_decode(decode_result *result, uint8_t *raw_insn, uint8_t length) {
   /* dis_fprintf doesn't actually use the stream argument, it just takes
    * disasm_buf from the module scope.
    *
@@ -72,23 +69,17 @@ void try_decode(decode_result *result, uint8_t *raw_insn, uint8_t length, decode
 
   memset(disasm_buf, 0, MISHEGOS_DEC_MAXLEN);
 
-  size_t insn_size;
   disasm_off = 0;
-  do {
-    insn_size = disasm(pc, &disasm_info);
+  size_t pc = disasm(0, &disasm_info);
 
-    /* Make sure each instruction is on its own line in the disassembly buffer.
-     */
-    size_t nl = snprintf(disasm_buf + disasm_off, MISHEGOS_DEC_MAXLEN - disasm_off, "\n");
-    assert(nl == 1 && "should have written exactly one byte");
-    _unused(nl);
-    disasm_off++;
+  /* Make sure each instruction is on its own line in the disassembly buffer.
+   */
+  size_t nl = snprintf(disasm_buf + disasm_off, MISHEGOS_DEC_MAXLEN - disasm_off, "\n");
+  assert(nl == 1 && "should have written exactly one byte");
+  _unused(nl);
+  disasm_off++;
 
-    pc += insn_size;
-    insn_count++;
-  } while (insn_size > 0 && pc < length && mode != D_SINGLE);
-
-  if (pc <= 0 || insn_count == 0 || strstr(disasm_buf, "(bad)") != NULL) {
+  if (pc <= 0 || strstr(disasm_buf, "(bad)") != NULL) {
     result->status = S_FAILURE;
   } else {
     result->status = S_SUCCESS;

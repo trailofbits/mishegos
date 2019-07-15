@@ -57,10 +57,7 @@ void worker_ctor() {
    */
 }
 
-void try_decode(decode_result *result, uint8_t *raw_insn, uint8_t length, decoder_mode mode) {
-  /* TODO(ww): Support mode == D_MULTIPLE.
-   */
-  assert(mode == D_SINGLE);
+void try_decode(decode_result *result, uint8_t *raw_insn, uint8_t length) {
   _unused(ZyanStatus_strerror);
 
   ZydisDecodedInstruction insn;
