@@ -110,8 +110,6 @@ PASS_FILE = Pathname.new File.expand_path("passes.yml", __dir__)
 
 opts = {
   profile: "default",
-  input: STDIN,
-  output: STDOUT,
 }
 
 OptionParser.new do |o|
@@ -119,14 +117,6 @@ OptionParser.new do |o|
 
   o.on "-p", "--profile PROFILE", String, "Use the given analysis profile" do |profile|
     opts[:profile] = profile
-  end
-
-  o.on "-i", "--input FILE", String, "Use the given file as input" do |input|
-    opts[:input] = File.open(input, "r")
-  end
-
-  o.on "-o", "--output FILE", String, "Use the given file for output" do |output|
-    opts[:output] = File.open(output, "w")
   end
 end.parse!
 
