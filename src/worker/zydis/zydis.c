@@ -44,9 +44,7 @@ static const char *ZyanStatus_strerror(ZyanStatus zstatus) {
   case ZYDIS_STATUS_INVALID_MASK: {
     return "invalid write mask";
   }
-  default: {
-    return "unknown";
-  }
+  default: { return "unknown"; }
   }
 }
 
