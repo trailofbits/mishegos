@@ -1,0 +1,22 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# filter-all-success: remove all cohorts in which each worker suceeded
+
+require "json"
+
+STDERR.puts "[+] pass: filter-all-success"
+
+count = 0
+STDIN.each_line do |line|
+  result = JSON.parse line, symbolize_names: true
+
+  if result[:outputs].all? { |o| o[:status_name] == "success" }
+    count += 1
+    next
+  end
+
+  STDOUT.puts result.to_json
+end
+
+STDERR.puts "[+] pass: filter-all-success done: #{count} filtered"

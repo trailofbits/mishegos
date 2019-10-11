@@ -1,0 +1,3 @@
+name: filter-all-success
+desc: Remove all cohorts in which each worker succeeded
+run: filter-all-success
