@@ -1,6 +1,7 @@
 #include "mish_common.h"
 #include "worker.h"
 
+static bool handle_crashes;
 static sig_atomic_t exiting;
 static uint32_t workerno;
 static char *worker_name;
@@ -60,14 +61,21 @@ int main(int argc, char const *argv[]) {
   init_sems();
   init_shm();
 
+  handle_crashes = GET_CONFIG()->worker_config & W_HANDLE_CRASHES;
+
   atexit(cleanup);
 
   sigaction(SIGINT, &(struct sigaction){.sa_handler = exit_sig}, NULL);
   sigaction(SIGTERM, &(struct sigaction){.sa_handler = exit_sig}, NULL);
   sigaction(SIGABRT, &(struct sigaction){.sa_handler = exit_sig}, NULL);
-  sigaction(SIGSEGV, &(struct sigaction){.sa_handler = fault_sig}, NULL);
-  sigaction(SIGBUS, &(struct sigaction){.sa_handler = fault_sig}, NULL);
-  sigaction(SIGILL, &(struct sigaction){.sa_handler = fault_sig}, NULL);
+
+  if (handle_crashes) {
+    sigaction(SIGSEGV, &(struct sigaction){.sa_handler = fault_sig}, NULL);
+    sigaction(SIGBUS, &(struct sigaction){.sa_handler = fault_sig}, NULL);
+    sigaction(SIGILL, &(struct sigaction){.sa_handler = fault_sig}, NULL);
+  } else {
+    DLOG("instructed not to handle crashes in worker=%s, beware!", worker_name);
+  }
 
   work();
 
@@ -205,7 +213,7 @@ static void work() {
     if (get_first_new_input_slot()) {
       memset(&output, 0, sizeof(output_slot));
 
-      if (sigsetjmp(fault_buf, 0) == 0) {
+      if (handle_crashes && sigsetjmp(fault_buf, 0) == 0) {
         try_decode(&output, input.raw_insn, input.len);
 
         /* Copy our input slot into our output slot, so that we can identify
@@ -229,7 +237,7 @@ static void work() {
         put_first_available_output_slot();
 
         /* Doesn't actually matter which signal we raise here as long as it
-         * causes termination (which it will, since is registered with SA_RESETHAND).
+         * causes termination (which it will, since it's registered with SA_RESETHAND).
          */
         raise(SIGSEGV);
       }

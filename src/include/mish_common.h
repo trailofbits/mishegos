@@ -105,6 +105,10 @@ typedef enum {
   M_DUMMY,
 } mutator_mode;
 
+typedef enum {
+  W_HANDLE_CRASHES = 1 << 0,
+} worker_config_mask;
+
 typedef struct {
   char *so;
   pid_t pid;
@@ -112,10 +116,11 @@ typedef struct {
 } worker;
 
 typedef struct __attribute__((packed)) {
+  uint32_t worker_config;
   uint64_t rng_seed[4];
   mutator_mode mut_mode;
 } mishegos_config;
-static_assert(sizeof(mishegos_config) == 36, "mishegos_config should be 36 bytes");
+static_assert(sizeof(mishegos_config) == 40, "mishegos_config should be 40 bytes");
 
 typedef struct __attribute__((packed)) {
   uint32_t workers;
