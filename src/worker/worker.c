@@ -1,7 +1,7 @@
 #include "mish_common.h"
 #include "worker.h"
 
-static bool handle_crashes;
+static bool ignore_crashes;
 static sig_atomic_t exiting;
 static uint32_t workerno;
 static char *worker_name;
@@ -61,7 +61,7 @@ int main(int argc, char const *argv[]) {
   init_sems();
   init_shm();
 
-  handle_crashes = GET_CONFIG()->worker_config & W_HANDLE_CRASHES;
+  ignore_crashes = GET_CONFIG()->worker_config & W_IGNORE_CRASHES;
 
   atexit(cleanup);
 
@@ -69,7 +69,7 @@ int main(int argc, char const *argv[]) {
   sigaction(SIGTERM, &(struct sigaction){.sa_handler = exit_sig}, NULL);
   sigaction(SIGABRT, &(struct sigaction){.sa_handler = exit_sig}, NULL);
 
-  if (handle_crashes) {
+  if (ignore_crashes) {
     sigaction(SIGSEGV, &(struct sigaction){.sa_handler = fault_sig}, NULL);
     sigaction(SIGBUS, &(struct sigaction){.sa_handler = fault_sig}, NULL);
     sigaction(SIGILL, &(struct sigaction){.sa_handler = fault_sig}, NULL);
@@ -213,7 +213,7 @@ static void work() {
     if (get_first_new_input_slot()) {
       memset(&output, 0, sizeof(output_slot));
 
-      if (handle_crashes && sigsetjmp(fault_buf, 0) == 0) {
+      if (!ignore_crashes && sigsetjmp(fault_buf, 0) == 0) {
         try_decode(&output, input.raw_insn, input.len);
 
         /* Copy our input slot into our output slot, so that we can identify
@@ -228,7 +228,7 @@ static void work() {
 
         put_first_available_output_slot();
       } else {
-        if (handle_crashes) {
+        if (!ignore_crashes) {
           /* Our worker has faulted. We need to create an S_CRASH output
            * and get out of dodge ASAP.
            */
