@@ -207,28 +207,34 @@ static void put_first_available_output_slot() {
   }
 }
 
+static void internal_work() {
+  try_decode(&output, input.raw_insn, input.len);
+
+  /* Copy our input slot into our output slot, so that we can identify
+   * individual runs.
+   */
+  memcpy(&output.input, &input, sizeof(input_slot));
+
+  /* Also put our worker number into the output slot, so we can index
+   * our worker cohort correctly.
+   */
+  output.workerno = workerno;
+
+  put_first_available_output_slot();
+}
+
 static void work() {
   while (!exiting) {
     DLOG("%s working...", worker_name);
     if (get_first_new_input_slot()) {
       memset(&output, 0, sizeof(output_slot));
 
-      if (!ignore_crashes && sigsetjmp(fault_buf, 0) == 0) {
-        try_decode(&output, input.raw_insn, input.len);
-
-        /* Copy our input slot into our output slot, so that we can identify
-         * individual runs.
-         */
-        memcpy(&output.input, &input, sizeof(input_slot));
-
-        /* Also put our worker number into the output slot, so we can index
-         * our worker cohort correctly.
-         */
-        output.workerno = workerno;
-
-        put_first_available_output_slot();
+      if (ignore_crashes) {
+        internal_work();
       } else {
-        if (!ignore_crashes) {
+        if (sigsetjmp(fault_buf, 0) == 0) {
+          internal_work();
+        } else {
           /* Our worker has faulted. We need to create an S_CRASH output
            * and get out of dodge ASAP.
            */
