@@ -106,7 +106,7 @@ typedef enum {
 } mutator_mode;
 
 typedef enum {
-  W_IGNORE_CRASHES = 1 << 0,
+  W_IGNORE_CRASHES,
 } worker_config_mask;
 
 typedef struct {

@@ -69,12 +69,12 @@ int main(int argc, char const *argv[]) {
   sigaction(SIGTERM, &(struct sigaction){.sa_handler = exit_sig}, NULL);
   sigaction(SIGABRT, &(struct sigaction){.sa_handler = exit_sig}, NULL);
 
-  if (!ignore_crashes) {
+  if (ignore_crashes) {
+    DLOG("instructed not to handle crashes in worker=%s, beware!", worker_name);
+  } else {
     sigaction(SIGSEGV, &(struct sigaction){.sa_handler = fault_sig}, NULL);
     sigaction(SIGBUS, &(struct sigaction){.sa_handler = fault_sig}, NULL);
     sigaction(SIGILL, &(struct sigaction){.sa_handler = fault_sig}, NULL);
-  } else {
-    DLOG("instructed not to handle crashes in worker=%s, beware!", worker_name);
   }
 
   work();
