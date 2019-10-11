@@ -171,7 +171,9 @@ static void config_init() {
    */
   getrandom(GET_CONFIG()->rng_seed, sizeof(GET_CONFIG()->rng_seed), 0);
 
-  GET_CONFIG()->worker_config |= !!(getenv("FAST_AND_FURIOUS")) << W_IGNORE_CRASHES;
+  if (getenv("FAST_AND_FURIOUS") != NULL) {
+    GET_CONFIG()->worker_config |= 1 << W_IGNORE_CRASHES;
+  }
 
   if (debugging) {
     GET_CONFIG()->mut_mode = M_DUMMY;
