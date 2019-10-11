@@ -228,18 +228,20 @@ static void work() {
 
         put_first_available_output_slot();
       } else {
-        /* Our worker has faulted. We need to create an S_CRASH output
-         * and get out of dodge ASAP.
-         */
-        output.input = input;
-        output.status = S_CRASH;
-        output.workerno = workerno;
-        put_first_available_output_slot();
+        if (handle_crashes) {
+          /* Our worker has faulted. We need to create an S_CRASH output
+           * and get out of dodge ASAP.
+           */
+          output.input = input;
+          output.status = S_CRASH;
+          output.workerno = workerno;
+          put_first_available_output_slot();
 
-        /* Doesn't actually matter which signal we raise here as long as it
-         * causes termination (which it will, since it's registered with SA_RESETHAND).
-         */
-        raise(SIGSEGV);
+          /* Doesn't actually matter which signal we raise here as long as it
+           * causes termination (which it will, since it's registered with SA_RESETHAND).
+           */
+          raise(SIGSEGV);
+        }
       }
     }
   }
