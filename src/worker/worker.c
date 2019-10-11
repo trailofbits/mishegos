@@ -61,7 +61,7 @@ int main(int argc, char const *argv[]) {
   init_sems();
   init_shm();
 
-  ignore_crashes = GET_CONFIG()->worker_config & W_IGNORE_CRASHES;
+  ignore_crashes = (GET_CONFIG()->worker_config >> W_IGNORE_CRASHES) & 1;
 
   atexit(cleanup);
 
