@@ -11,10 +11,11 @@ COLOR_TABLE = Hash.new("#808080").update(
   "success" => "#00FF00",
   "failure" => "#FF0000",
   "none" => "#0000FF",
+  "partial" => "#808080",
   "unknown" => "#4B0082"
 )
 
-HEADER = <<~HTML
+HEADER = ERB.new <<~HTML
   <!DOCTYPE html>
   <html>
     <head>
@@ -34,6 +35,19 @@ HEADER = <<~HTML
 
   <body>
     <h1>mishmat (mishegos)</h1>
+
+    <h2>legend</h2>
+    <table>
+      <% COLOR_TABLE.each do |color, hex| %>
+        <tr>
+          <td><%= color %></td>
+          <td style="background-color: <%= hex %>; width: 10px"></td>
+        </tr>
+      <% end %>
+    </table>
+
+    <br><br><br>
+
     <table>
 HTML
 
@@ -44,11 +58,11 @@ HEADER_ROWS = ERB.new <<~HTML
   </tr>
 
   <tr>
-    <td></td>
+    <th></th>
     <% row[:outputs].each do |col| %>
-      <td>
+      <th>
         <%= col[:worker_so] %>
-      </td>
+      </th>
     <% end %>
   </tr>
 HTML
@@ -56,11 +70,11 @@ HTML
 ENTRY_ROW = ERB.new <<~HTML
   <tr>
     <td>
-      <%= row[:input] %>
+      <code><%= row[:input] %></code>
     </td>
     <% row[:outputs].each do |col| %>
       <td style="background-color: <%= COLOR_TABLE[col[:status_name]] %>">
-        <%= col[:result] %> (<%= col[:ndecoded] %> / <%= col[:len] %>)
+        <code><%= col[:result] %></code> (<%= col[:ndecoded] %> / <%= col[:len] %>)
       </td>
     <% end %>
   </tr>
@@ -77,7 +91,7 @@ opts = {
 }
 
 def write_header!(row)
-  STDOUT.puts HEADER
+  STDOUT.puts HEADER.result(binding)
   STDOUT.puts HEADER_ROWS.result(binding)
 end
 
