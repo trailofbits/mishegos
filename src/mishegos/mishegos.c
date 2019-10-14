@@ -475,8 +475,8 @@ char *hexdump(input_slot *slot) {
 }
 
 void hex2bytes(uint8_t *outbuf, const char *const input, size_t input_len) {
-  for (size_t i = 0; i < input_len / 2; ++i) {
-    outbuf[i] = (input[i] % 32 + 9) % 25 * 16 + (input[i + 1] % 32 + 9) % 25;
+  for (size_t i = 0, j = 0; j < input_len / 2; i += 2, ++j) {
+    outbuf[j] = (input[i] % 32 + 9) % 25 * 16 + (input[i + 1] % 32 + 9) % 25;
   }
 }
 
