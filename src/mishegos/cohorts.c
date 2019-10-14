@@ -1,4 +1,4 @@
-#include "mish_common.h"
+#include "mish_core.h"
 #include "parson.h"
 
 static output_cohort cohorts[MISHEGOS_COHORT_NSLOTS];

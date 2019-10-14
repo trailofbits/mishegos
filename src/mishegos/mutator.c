@@ -195,20 +195,20 @@ static void build_sliding_candidate() {
 
 /* Havoc: generate a random instruction candidate.
  */
-static void havoc_candidate(input_slot *slot) {
+static bool havoc_candidate(input_slot *slot) {
   slot->len = (rand_byte() % MISHEGOS_INSN_MAXLEN) + 1;
   uint64_t lower = rand_long();
   uint64_t upper = rand_long();
   memcpy(slot->raw_insn, &lower, 8);
   memcpy(slot->raw_insn + 8, &upper, 7);
+
+  return true;
 }
 
 /* Sliding: generate an instruction candidate with the
  * "sliding" approach.
- *
- * Essentially,
  */
-static void sliding_candidate(input_slot *slot) {
+static bool sliding_candidate(input_slot *slot) {
   /* An offset of zero into our sliding candidate indicates that we've slid
    * all the way through and need to build a new candidate.
    */
@@ -233,13 +233,44 @@ static void sliding_candidate(input_slot *slot) {
     slot->len = MISHEGOS_INSN_MAXLEN;
     insn_cand.off = (insn_cand.off + 1) % (insn_cand.len - MISHEGOS_INSN_MAXLEN + 1);
   }
+
+  return true;
 }
 
 /* Dummy: Generates a single NOP for debugging purposes.
  */
-static void dummy_candidate(input_slot *slot) {
+static bool dummy_candidate(input_slot *slot) {
   slot->raw_insn[0] = 0x90;
   slot->len = 1;
+
+  /* NOTE(ww): We only ever want to fill one input slot with our dummy candidate,
+   * since other parts of mishegos disambiguate worker outputs by keying on the input.
+   */
+  return false;
+}
+
+/* Manual: reads instruction candidates from stdin, one per line.
+ * Candidates are expected to be in hex format, with no 0x or \x prefix.
+ */
+static bool manual_candidate(input_slot *slot) {
+  char *line = NULL;
+  size_t size;
+  if (getline(&line, &size, stdin) < 0) {
+    /* Input exhausted.
+     */
+    return false;
+  }
+
+  line[strcspn(line, "\n")] = '\0';
+  size_t linelen = strlen(line);
+  if (linelen == 0 || linelen > MISHEGOS_INSN_MAXLEN * 2) {
+    return false;
+  }
+
+  hex2bytes(slot->raw_insn, line, linelen);
+  slot->len = linelen / 2;
+
+  return true;
 }
 
 void mutator_init() {
@@ -250,20 +281,29 @@ void mutator_init() {
   mut_mode = GET_CONFIG()->mut_mode;
 }
 
-void candidate(input_slot *slot) {
+/* Generate a single fuzzing candidate and populate the given input slot with it.
+ * Returns false if the configured mutation mode has been exhausted.
+ */
+bool candidate(input_slot *slot) {
+  bool exhausted;
+
   switch (mut_mode) {
   case M_HAVOC: {
-    havoc_candidate(slot);
+    exhausted = havoc_candidate(slot);
     break;
   }
   case M_SLIDING: {
-    sliding_candidate(slot);
+    exhausted = sliding_candidate(slot);
     break;
   }
   case M_DUMMY: {
-    dummy_candidate(slot);
+    exhausted = dummy_candidate(slot);
+    break;
+  }
+  case M_MANUAL: {
+    exhausted = manual_candidate(slot);
     break;
   }
   }
-  return;
+  return exhausted;
 }

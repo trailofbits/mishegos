@@ -35,6 +35,7 @@
 #include <sys/wait.h>
 #include <setjmp.h>
 #include <sys/random.h>
+#include <time.h>
 
 #define VERBOSE(fmt, ...)                                                                          \
   if (verbose) {                                                                                   \
@@ -103,6 +104,7 @@ typedef enum {
   M_HAVOC = 0,
   M_SLIDING,
   M_DUMMY,
+  M_MANUAL,
 } mutator_mode;
 
 typedef enum {
@@ -125,7 +127,7 @@ static_assert(sizeof(mishegos_config) == 40, "mishegos_config should be 40 bytes
 typedef struct __attribute__((packed)) {
   uint32_t workers;
   uint8_t len;
-  uint8_t raw_insn[15];
+  uint8_t raw_insn[MISHEGOS_INSN_MAXLEN];
 } input_slot;
 static_assert(sizeof(input_slot) == 20, "input_slot should be 20 bytes");
 
@@ -172,6 +174,3 @@ static inline const char *status2str(decode_status status) {
     return "unknown";
   }
 }
-
-const char *get_worker_so(uint32_t workerno);
-char *hexdump(input_slot *slot);

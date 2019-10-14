@@ -7,7 +7,7 @@ typedef struct {
 
 uint8_t *mishegos_arena;
 
-static bool verbose, debugging;
+static bool verbose, debugging, manual;
 static counters counts;
 static sig_atomic_t exiting;
 static sig_atomic_t worker_died;
@@ -41,10 +41,12 @@ int main(int argc, char const *argv[]) {
   if (strcmp(argv[1], "-Xc") == 0) {
     cleanup();
     return 0;
+  } else if (strcmp(argv[1], "-Xm") == 0) {
   }
 
   verbose = (getenv("V") != NULL);
   debugging = (getenv("D") != NULL);
+  manual = (getenv("M") != NULL);
 
   /* Load workers from specification.
    */
@@ -101,8 +103,8 @@ static void load_worker_spec(char const *spec) {
       break;
     }
 
-    /* getline retains the newline, so chop it off. */
-    workers[i].so[strlen(workers[i].so) - 1] = '\0';
+    /* getline retains the newline if present, so chop it off. */
+    workers[i].so[strcspn(workers[i].so, "\n")] = '\0';
 
     if (workers[i].so[0] == '#') {
       DLOG("skipping commented line: %s", workers[i].so);
@@ -175,7 +177,9 @@ static void config_init() {
     GET_CONFIG()->worker_config |= 1 << W_IGNORE_CRASHES;
   }
 
-  if (debugging) {
+  if (manual) {
+    GET_CONFIG()->mut_mode = M_MANUAL;
+  } else if (debugging) {
     GET_CONFIG()->mut_mode = M_DUMMY;
   } else {
     GET_CONFIG()->mut_mode = M_SLIDING;
@@ -190,14 +194,17 @@ static void arena_init() {
    */
   for (int i = 0; i < MISHEGOS_IN_NSLOTS; ++i) {
     input_slot *slot = GET_I_SLOT(i);
-    /* Set NWORKERS bits of the worker mask high;
-     * each worker will flip their bit after consuming
-     * a slot.
-     */
-    slot->workers = ~(~0 << MISHEGOS_NWORKERS);
-    candidate(slot);
-    DLOG("slot=%d new candidate:", i);
-    hexputs(slot->raw_insn, slot->len);
+
+    if (candidate(slot)) {
+      /* Set NWORKERS bits of the worker mask high;
+       * each worker will flip their bit after consuming
+       * a slot.
+       */
+      slot->workers = ~(~0 << MISHEGOS_NWORKERS);
+      candidate(slot);
+      DLOG("slot=%d new candidate:", i);
+      hexputs(slot->raw_insn, slot->len);
+    }
   }
 
   /* Mark our output slots as having no result, so that we kick things
@@ -366,6 +373,20 @@ static void work() {
     dump_cohorts();
   }
 
+  /* If we're in manual mode, there's a good chance that a decent chunk of our inputs are
+   * still making their way through the workers + output pipeline at the time exhaustion
+   * is signaled. We time-loop here a bit to give output and cohort matching a chance
+   * to catch up.
+   */
+  if (manual) {
+    DLOG("manual mode: making sure to flush results");
+    for (int i = 0; i < 10; ++i) {
+      do_outputs();
+      dump_cohorts();
+      millisleep(150);
+    }
+  }
+
   DLOG("exiting...");
 }
 
@@ -393,12 +414,15 @@ static void do_inputs() {
     /* If our worker mask is empty, then we can put a new sample
      * in the slot and reset the mask.
      */
-    slot->workers = ~(~0 << MISHEGOS_NWORKERS);
-    candidate(slot);
-    counts.islots++;
-
-    DLOG("slot=%d new candidate:", i);
-    hexputs(slot->raw_insn, slot->len);
+    if (candidate(slot)) {
+      slot->workers = ~(~0 << MISHEGOS_NWORKERS);
+      counts.islots++;
+      DLOG("slot=%d new candidate:", i);
+      hexputs(slot->raw_insn, slot->len);
+    } else {
+      VERBOSE("mutation engine exhausted! signaling exit...");
+      exiting = true;
+    }
 
   done:
     sem_post(mishegos_isems[i]);
@@ -437,6 +461,8 @@ const char *get_worker_so(uint32_t workerno) {
   return workers[workerno].so;
 }
 
+/* TODO(ww): Move these to a separate file.
+ */
 char *hexdump(input_slot *slot) {
   assert(slot->len <= 15);
   char *buf = malloc((slot->len * 2) + 1);
@@ -446,4 +472,14 @@ char *hexdump(input_slot *slot) {
   }
 
   return buf;
+}
+
+void hex2bytes(uint8_t *outbuf, const char *const input, size_t input_len) {
+  for (size_t i = 0; i < input_len / 2; ++i) {
+    outbuf[i] = (input[i] % 32 + 9) % 25 * 16 + (input[i + 1] % 32 + 9) % 25;
+  }
+}
+
+void millisleep(uint64_t millis) {
+  nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = millis * 1000000}, NULL);
 }

@@ -32,4 +32,4 @@ typedef struct {
 } insn_candidate;
 
 void mutator_init();
-void candidate(input_slot *slot);
+bool candidate(input_slot *slot);
