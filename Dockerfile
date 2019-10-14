@@ -1,6 +1,6 @@
 FROM ubuntu:latest
 
-RUN apt update && apt install -y build-essential binutils-dev python cmake ruby
+RUN apt update && apt install -y build-essential binutils-dev python3 cmake ruby
 
 WORKDIR /app/mishegos
 COPY ./ .

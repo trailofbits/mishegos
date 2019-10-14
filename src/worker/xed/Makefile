@@ -11,7 +11,7 @@ all: xed.so
 .ONESHELL:
 xed/kits/xed-mishegos/libxed.so:
 	cd xed
-	python ./mfile.py install --shared --install-dir=kits/xed-mishegos -j 4
+	python3 ./mfile.py install --shared --install-dir=kits/xed-mishegos -j 4
 
 xed.so: xed.o
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) xed.o $(LDLIBS) -o $@
