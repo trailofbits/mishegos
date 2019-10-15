@@ -1,6 +1,16 @@
 FROM ubuntu:latest
 
-RUN apt update && apt install -y build-essential binutils-dev python3 cmake ruby
+RUN apt update && \
+  apt install -y \
+    build-essential \
+    binutils-dev \
+    python \
+    python3 \
+    cmake \
+    ruby \
+    autotools-dev \
+    autoconf \
+    libtool
 
 WORKDIR /app/mishegos
 COPY ./ .
