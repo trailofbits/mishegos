@@ -12,6 +12,7 @@ void try_decode(decode_result *result, uint8_t *raw_insn, uint8_t length) {
   xed_decoded_inst_t xedd;
   xed_decoded_inst_zero(&xedd);
   xed_decoded_inst_set_mode(&xedd, XED_MACHINE_MODE_LONG_64, XED_ADDRESS_WIDTH_64b);
+  xed_decoded_inst_set_input_chip(&xedd, XED_CHIP_ALL);
 
   xed_error_enum_t xed_error = xed_decode(&xedd, raw_insn, length);
   if (xed_error != XED_ERROR_NONE) {
