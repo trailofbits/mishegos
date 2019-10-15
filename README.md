@@ -83,9 +83,6 @@ Within Docker:
     * Break cohort collection out into a separate process (requires re-addition of semaphores)
     * Maybe use a better data structure for input/output/cohort slots
     * Use a faster serialization format than JSON
-* Add more workers:
-    * qemu's decoder
-    * Binary Ninja, IDA
 * Add a scaling factor for workers, e.g. spawn `N` of each worker
 * Pre-analysis normalization (whitespace, immediate representation, prefixes)
 * Analysis strategies:
