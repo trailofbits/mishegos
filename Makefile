@@ -10,6 +10,7 @@ ALL_SRCS := $(shell \
 	\( \
 		-path '*/capstone/capstone/*' -o \
 		-path '*/vendor/*' -o \
+		-path '*/udis86/udis86/*' -o \
 		-path '*/xed/xed/*' -o \
 		-path '*/xed/mbuild/*' -o \
 		-path '*/zydis/zydis/*' \

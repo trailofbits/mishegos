@@ -1,5 +1,6 @@
 WORKERS = bfd \
 	capstone \
+	udis86 \
 	xed \
 	zydis
 

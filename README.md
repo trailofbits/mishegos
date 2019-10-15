@@ -84,7 +84,6 @@ Within Docker:
     * Maybe use a better data structure for input/output/cohort slots
     * Use a faster serialization format than JSON
 * Add more workers:
-    * https://github.com/vmt/udis86
     * qemu's decoder
     * Binary Ninja, IDA
 * Add a scaling factor for workers, e.g. spawn `N` of each worker

@@ -10,3 +10,6 @@
 [submodule "src/worker/zydis/zydis"]
 	path = src/worker/zydis/zydis
 	url = git://github.com/zyantific/zydis.git
+[submodule "src/worker/udis86/udis86"]
+	path = src/worker/udis86/udis86
+	url = git://github.com/vmt/udis86.git
