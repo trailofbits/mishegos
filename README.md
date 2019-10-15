@@ -41,6 +41,12 @@ Run the fuzzer for a bit:
 ./src/mishegos/mishegos ./workers.spec
 ```
 
+`mishegos` checks for three environment variables:
+
+* `V=1` enables verbose output on `stderr`
+* `D=1` enables the "dummy" mutation mode for debugging purposes
+* `M=1` enables the "manual" mutation mode (i.e., read from `stdin`)
+
 Run an analysis/filter pass group on the results:
 
 ```bash
@@ -75,7 +81,6 @@ Within Docker:
 
 * Performance improvements
     * Break cohort collection out into a separate process (requires re-addition of semaphores)
-    * Avoid `longjmp`/`setjmp` for error recovery within worker processes
     * Maybe use a better data structure for input/output/cohort slots
     * Use a faster serialization format than JSON
 * Add more workers:
