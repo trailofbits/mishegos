@@ -4,6 +4,10 @@ export CFLAGS := \
 	-I$(shell pwd)/src/vendor/include
 export LDLIBS := -ldl -lrt -lpthread
 export CPPFLAGS :=
+export CXXFLAGS := \
+	-std=c++11 -Wall -Werror -pthread \
+	-I$(shell pwd)/src/include \
+	-I$(shell pwd)/src/vendor/include
 
 ALL_SRCS := $(shell \
 	find . -type f \
