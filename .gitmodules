@@ -13,3 +13,6 @@
 [submodule "src/worker/udis86/udis86"]
 	path = src/worker/udis86/udis86
 	url = git://github.com/vmt/udis86.git
+[submodule "src/worker/dynamorio/dynamorio"]
+	path = src/worker/dynamorio/dynamorio
+	url = https://github.com/DynamoRIO/dynamorio.git
