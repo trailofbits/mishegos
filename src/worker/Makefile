@@ -1,6 +1,7 @@
 WORKERS = bfd \
 	capstone \
 	dynamorio \
+	fadec \
 	udis86 \
 	xed \
 	zydis
