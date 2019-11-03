@@ -48,11 +48,10 @@
 #define MISHEGOS_IN_NSLOTS 10 // TODO(ww): Increase
 static_assert(MISHEGOS_IN_NSLOTS >= 2, "MISHEGOS_IN_NSLOTS should be >= 2");
 #define MISHEGOS_OUT_NSLOTS 50 // TODO(ww): Increase
-/* TODO(ww): Remove this and replace it with an nworkers field stored in
- * mishegos_config.
+
+/* Size of our worker bitmask, minus 1 (to avoid UB).
  */
-#define MISHEGOS_NWORKERS 6
-#define MISHEGOS_MAX_NWORKERS 31 // Size of our worker bitmask, minus 1 (to avoid UB).
+#define MISHEGOS_MAX_NWORKERS 31
 static_assert(MISHEGOS_MAX_NWORKERS == 31, "MISHEGOS_MAX_NWORKERS cannot exceed 31");
 #define MISHEGOS_COHORT_NSLOTS 60
 /* NOTE(ww): If this seems a little weird, remember that there are up to
@@ -118,11 +117,12 @@ typedef struct {
 } worker;
 
 typedef struct __attribute__((packed)) {
+  uint32_t nworkers;
   uint32_t worker_config;
   uint64_t rng_seed[4];
   mutator_mode mut_mode;
 } mishegos_config;
-static_assert(sizeof(mishegos_config) == 40, "mishegos_config should be 40 bytes");
+static_assert(sizeof(mishegos_config) == 44, "mishegos_config should be 44 bytes");
 
 typedef struct __attribute__((packed)) {
   uint32_t workers;
@@ -143,7 +143,7 @@ static_assert(sizeof(output_slot) == 1050, "output_slot should be 1050 bytes");
 
 typedef struct {
   uint32_t workers;
-  output_slot outputs[MISHEGOS_NWORKERS];
+  output_slot *outputs;
 } output_cohort;
 
 static inline void _hexputs(uint8_t *buf, uint8_t len) {

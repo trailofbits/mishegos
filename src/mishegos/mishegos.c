@@ -11,7 +11,11 @@ static bool verbose, debugging, manual;
 static counters counts;
 static sig_atomic_t exiting;
 static sig_atomic_t worker_died;
-static worker workers[MISHEGOS_NWORKERS];
+/* TODO(ww): This should really be dynamically allocated to the size
+ * of nworkers, but we use it to stash the name of each worker's shared
+ * object before we finish determining the full worker count. Annoying.
+ */
+static worker workers[MISHEGOS_MAX_NWORKERS];
 static sem_t *mishegos_isems[MISHEGOS_IN_NSLOTS];
 static sem_t *mishegos_osems[MISHEGOS_OUT_NSLOTS];
 
@@ -48,10 +52,6 @@ int main(int argc, char const *argv[]) {
   debugging = (getenv("D") != NULL);
   manual = (getenv("M") != NULL);
 
-  /* Load workers from specification.
-   */
-  load_worker_spec(argv[1]);
-
   /* Create shared memory, semaphores.
    */
   mishegos_shm_init();
@@ -74,6 +74,14 @@ int main(int argc, char const *argv[]) {
    */
   config_init();
   mutator_init();
+
+  /* Load workers from specification.
+   *
+   * NOTE(ww): This needs to happen after shared memory initialization, since it sets
+   * the nworkers field in the config. Similarly, arena_init and cohorts_init depend on the
+   * nworkers field.
+   */
+  load_worker_spec(argv[1]);
   arena_init();
   cohorts_init();
 
@@ -96,28 +104,30 @@ static void load_worker_spec(char const *spec) {
     err(errno, "fopen: %s", spec);
   }
 
-  int i = 0;
-  while (i < MISHEGOS_NWORKERS) {
+  uint32_t nworkers = 0;
+  while (nworkers < MISHEGOS_MAX_NWORKERS) {
     size_t size = 0;
-    if (getline(&workers[i].so, &size, file) < 0 && feof(file) == 0) {
+    if (getline(&workers[nworkers].so, &size, file) < 0 || feof(file) != 0) {
       break;
     }
 
     /* getline retains the newline if present, so chop it off. */
-    workers[i].so[strcspn(workers[i].so, "\n")] = '\0';
+    workers[nworkers].so[strcspn(workers[nworkers].so, "\n")] = '\0';
 
-    if (workers[i].so[0] == '#') {
-      DLOG("skipping commented line: %s", workers[i].so);
+    if (workers[nworkers].so[0] == '#') {
+      DLOG("skipping commented line: %s", workers[nworkers].so);
       continue;
     }
 
-    DLOG("got worker %d so: %s", i, workers[i].so);
-    i++;
+    DLOG("got worker %d so: %s", nworkers, workers[nworkers].so);
+    nworkers++;
   }
 
-  if (i < MISHEGOS_NWORKERS) {
-    errx(1, "too few workers in spec");
+  if (nworkers < 1) {
+    errx(1, "too few workers in spec (expected > 1)");
   }
+
+  GET_CONFIG()->nworkers = nworkers;
 
   fclose(file);
 }
@@ -192,15 +202,16 @@ static void arena_init() {
 
   /* Place an initial raw instruction candidate in each input slot.
    */
+  uint32_t nworkers = GET_CONFIG()->nworkers;
   for (int i = 0; i < MISHEGOS_IN_NSLOTS; ++i) {
     input_slot *slot = GET_I_SLOT(i);
 
     if (candidate(slot)) {
-      /* Set NWORKERS bits of the worker mask high;
+      /* Set nworkers bits of the worker mask high;
        * each worker will flip their bit after consuming
        * a slot.
        */
-      slot->workers = ~(~0 << MISHEGOS_NWORKERS);
+      slot->workers = ~(~0 << nworkers);
       candidate(slot);
       DLOG("slot=%d new candidate:", i);
       hexputs(slot->raw_insn, slot->len);
@@ -220,7 +231,8 @@ static void arena_init() {
 
 static void cleanup() {
   DLOG("cleaning up");
-  for (int i = 0; i < MISHEGOS_NWORKERS; ++i) {
+  uint32_t nworkers = GET_CONFIG()->nworkers;
+  for (int i = 0; i < nworkers; ++i) {
     if (workers[i].running) {
       kill(workers[i].pid, SIGINT);
       waitpid(workers[i].pid, NULL, 0);
@@ -271,7 +283,7 @@ static void child_sig(int signo) {
 }
 
 static void start_worker(int workerno) {
-  assert(workerno < MISHEGOS_NWORKERS && "workerno out of bounds");
+  assert(workerno <= MISHEGOS_MAX_NWORKERS && "workerno out of bounds");
   DLOG("starting worker=%d with so=%s", workerno, workers[workerno].so);
 
   pid_t pid;
@@ -299,7 +311,8 @@ static void start_worker(int workerno) {
 
 static void start_workers() {
   DLOG("starting workers");
-  for (int i = 0; i < MISHEGOS_NWORKERS; ++i) {
+  uint32_t nworkers = GET_CONFIG()->nworkers;
+  for (int i = 0; i < nworkers; ++i) {
     start_worker(i);
   }
 }
@@ -318,8 +331,9 @@ static void find_and_restart_dead_worker() {
     errx(1, "treating unsignaled dead worker as an init failure and exiting...");
   }
 
+  uint32_t nworkers = GET_CONFIG()->nworkers;
   int workerno = -1;
-  for (int i = 0; i < MISHEGOS_NWORKERS; ++i) {
+  for (int i = 0; i < nworkers; ++i) {
     if (workers[i].pid == wpid) {
       workerno = i;
       break;
@@ -397,6 +411,7 @@ static void do_inputs() {
      for slot semaphores in ascending order, so we balance things out a bit
      by contending in descending order. Same for output slots.
    */
+  uint32_t nworkers = GET_CONFIG()->nworkers;
   for (int i = MISHEGOS_IN_NSLOTS - 1; i >= 0; i--) {
     /* NOTE(ww): Using sem_trywait results in a pretty nice performance
      * boost within the workers, but degrades performance horrendously here.
@@ -415,7 +430,7 @@ static void do_inputs() {
      * in the slot and reset the mask.
      */
     if (candidate(slot)) {
-      slot->workers = ~(~0 << MISHEGOS_NWORKERS);
+      slot->workers = ~(~0 << nworkers);
       counts.islots++;
       DLOG("slot=%d new candidate:", i);
       hexputs(slot->raw_insn, slot->len);
@@ -457,7 +472,7 @@ static void do_outputs() {
 }
 
 const char *get_worker_so(uint32_t workerno) {
-  assert(workerno < MISHEGOS_NWORKERS);
+  assert(workerno < MISHEGOS_MAX_NWORKERS);
   return workers[workerno].so;
 }
 
