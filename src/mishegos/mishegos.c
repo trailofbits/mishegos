@@ -77,8 +77,8 @@ int main(int argc, char const *argv[]) {
 
   /* Load workers from specification.
    *
-   * NOTE(ww): This needs to happen after config_init, since it sets the nworkers
-   * field in the config. Similarly, arena_init and cohorts_init depend on the
+   * NOTE(ww): This needs to happen after shared memory initialization, since it sets
+   * the nworkers field in the config. Similarly, arena_init and cohorts_init depend on the
    * nworkers field.
    */
   load_worker_spec(argv[1]);
@@ -107,7 +107,7 @@ static void load_worker_spec(char const *spec) {
   uint32_t nworkers = 0;
   while (nworkers < MISHEGOS_MAX_NWORKERS) {
     size_t size = 0;
-    if (getline(&workers[nworkers].so, &size, file) < 0 && feof(file) == 0) {
+    if (getline(&workers[nworkers].so, &size, file) < 0 || feof(file) != 0) {
       break;
     }
 
