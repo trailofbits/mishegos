@@ -7,12 +7,18 @@ void cohorts_init() {
   // NOTE(ww): We don't need to call this with each cohort dump,
   // so just put it here.
   json_set_escape_slashes(0);
+
+  uint32_t nworkers = GET_CONFIG()->nworkers;
+  for (int i = 0; i < MISHEGOS_COHORT_NSLOTS; ++i) {
+    cohorts[i].outputs = malloc(sizeof(output_slot) * nworkers);
+  }
 }
 
 void cohorts_cleanup() {
   DLOG("cleaning up");
 
   /* NOTE(ww): Nothing here for now.
+   * We could free each cohorts[i].outputs here, but we're exiting anyways.
    */
 }
 
@@ -84,7 +90,8 @@ bool add_to_cohort(output_slot *slot) {
 
 static void dump_cohort(output_cohort *cohort) {
   DLOG("dumping cohort");
-  assert(cohort->workers == ~(~0 << MISHEGOS_NWORKERS) && "dump_cohort called on partial cohort");
+  uint32_t nworkers = GET_CONFIG()->nworkers;
+  assert(cohort->workers == ~(~0 << nworkers) && "dump_cohort called on partial cohort");
 
   JSON_Value *root_value = json_value_init_object();
   JSON_Object *cohort_obj = json_value_get_object(root_value);
@@ -96,7 +103,7 @@ static void dump_cohort(output_cohort *cohort) {
 
   JSON_Value *outputs_value = json_value_init_array();
   JSON_Array *outputs_arr = json_value_get_array(outputs_value);
-  for (int i = 0; i < MISHEGOS_NWORKERS; ++i) {
+  for (int i = 0; i < nworkers; ++i) {
     JSON_Value *output_value = json_value_init_object();
     JSON_Object *output = json_value_get_object(output_value);
 
@@ -129,10 +136,11 @@ static void dump_cohort(output_cohort *cohort) {
 void dump_cohorts() {
   DLOG("dumping fully populated cohorts");
 
+  uint32_t nworkers = GET_CONFIG()->nworkers;
   for (int i = 0; i < MISHEGOS_COHORT_NSLOTS; ++i) {
-    if (cohorts[i].workers != ~(~0 << MISHEGOS_NWORKERS)) {
+    if (cohorts[i].workers != ~(~0 << nworkers)) {
       DLOG("skipping incomplete cohort (worker mask=%d, expected=%d)", cohorts[i].workers,
-           ~(~0 << MISHEGOS_NWORKERS));
+           ~(~0 << nworkers));
       /* Slot not fully populated.
        */
       continue;
