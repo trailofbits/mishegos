@@ -60,6 +60,12 @@ Generate an ~ugly~ pretty visualization of the filtered results:
 open /tmp/mishegos.html
 ```
 
+### Contributing
+
+We welcome contributors to mishegos!
+
+A guide for adding new disassembler workers can be found [here](./docs/adding_a_worker.md).
+
 ### Performance notes
 
 All numbers below correspond to the following run:
