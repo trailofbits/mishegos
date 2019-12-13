@@ -7,6 +7,7 @@ RUN apt update && \
     python \
     python3 \
     cmake \
+    meson \
     ruby \
     autotools-dev \
     autoconf \

@@ -16,3 +16,6 @@
 [submodule "src/worker/dynamorio/dynamorio"]
 	path = src/worker/dynamorio/dynamorio
 	url = https://github.com/DynamoRIO/dynamorio.git
+[submodule "src/worker/fadec/fadec"]
+	path = src/worker/fadec/fadec
+	url = https://github.com/aengelke/fadec.git
