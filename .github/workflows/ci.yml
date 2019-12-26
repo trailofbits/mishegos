@@ -24,5 +24,7 @@ jobs:
     runs-on: ${{ matrix.platform }}
     steps:
     - uses: actions/checkout@v2
+    - name: Install dependencies
+      run: apt install -y build-essential binutils-dev python python3 cmake meson ruby autotools-dev autoconf libtool
     - name: Build
-      run: docker build -t mishegos_ci .
+      run: make -j$(nproc)
