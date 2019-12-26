@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+  schedule:
+    # run CI every day even if no PRs/merges occur
+    - cron:  '0 12 * * *'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: sudo apt install -y cppcheck clang-format-7
+      - name: Lint
+        run: |
+          make fmt && git diff --exit-code
+          make lint
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Checkout submodules
+      run: |
+        auth_header="$(git config --local --get http.https://github.com/.extraheader)"
+        git submodule sync --recursive
+        git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive
+    - name: Install dependencies
+      run: sudo apt install -y build-essential binutils-dev python python3 cmake meson ruby autotools-dev autoconf libtool
+    - name: Build
+      run: make -j$(nproc)
