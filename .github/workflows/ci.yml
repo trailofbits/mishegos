@@ -21,7 +21,7 @@ jobs:
           make fmt && git diff --exit-code
           make lint
   build:
-    runs-on: ${{ matrix.platform }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
     - name: Install dependencies
