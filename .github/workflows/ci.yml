@@ -25,6 +25,6 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Install dependencies
-      run: apt install -y build-essential binutils-dev python python3 cmake meson ruby autotools-dev autoconf libtool
+      run: sudo apt install -y build-essential binutils-dev python python3 cmake meson ruby autotools-dev autoconf libtool
     - name: Build
       run: make -j$(nproc)
