@@ -26,7 +26,7 @@ ALL_SRCS := $(shell \
 )
 
 .PHONY: all
-all: mishegos worker
+all: mishegos worker mish_to_JSON
 
 .PHONY: debug
 debug: CPPFLAGS += -DDEBUG
@@ -40,6 +40,10 @@ mishegos:
 .PHONY: worker
 worker:
 	$(MAKE) -C src/worker
+
+.PHONY: mish_to_JSON
+mish_to_JSON:
+    $(MAKE) -C src/mish_to_JSON
 
 .PHONY: fmt
 fmt:
@@ -61,3 +65,4 @@ clean:
 .PHONY: update-submodules
 update-submodules:
 	git submodule foreach git pull origin master
+
