@@ -2,17 +2,6 @@ import json
 import sys
 from cohort import Cohort
 
-
-class ComplexEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, complex):
-            return [obj.real, obj.imag]
-        # Let the base class default method raise the TypeError
-        return json.JSONEncoder.default(self, obj)
-
-
-# intergrating into build crea
-# create script of getting proper file
 class FormattingJSON:
     # opening file reading from
     output_file = Cohort.from_io(sys.stdin.buffer)
@@ -46,5 +35,5 @@ class FormattingJSON:
             "outputs": output_list,
         }
         # convert each Json to file
-        to_json = json.dumps(cohorts, cls=ComplexEncoder)
+        to_json = json.dumps(cohorts)
         print(to_json, file=sys.stdout)

@@ -54,8 +54,3 @@ enums:
     5: s_partial
     6: s_wouldblock
     7: s_unknown
-      
-      
-
-  
-  
