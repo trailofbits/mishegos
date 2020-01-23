@@ -11,7 +11,8 @@ RUN apt update && \
     ruby \
     autotools-dev \
     autoconf \
-    libtool
+    libtool \
+    git
 
 WORKDIR /app/mishegos
 COPY ./ .
