@@ -26,7 +26,7 @@ ALL_SRCS := $(shell \
 )
 
 .PHONY: all
-all: mishegos worker mish_to_JSON
+all: mishegos worker mish2json
 
 .PHONY: debug
 debug: CPPFLAGS += -DDEBUG
@@ -41,9 +41,9 @@ mishegos:
 worker:
 	$(MAKE) -C src/worker
 
-.PHONY: mish_to_JSON
-mish_to_JSON:
-    $(MAKE) -C src/mish_to_JSON
+.PHONY: mish2json
+mish2json:
+	$(MAKE) -C src/mish2json
 
 .PHONY: fmt
 fmt:
