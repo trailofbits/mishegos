@@ -1,10 +1,6 @@
 FROM ubuntu:latest
 
-RUN apt-get install -y gnupg && \
-    apt-key adv --keyserver hkp://pool.sks-keyservers.net --recv 379CE192D401AB61 && \
-    echo "deb https://dl.bintray.com/kaitai-io/debian jessie main" \
-        | tee /etc/apt/sources.list.d/kaitai.list && \
-    apt-get update && \
+RUN apt-get update && \
     apt-get install -y \
         build-essential \
         binutils-dev \
@@ -17,6 +13,12 @@ RUN apt-get install -y gnupg && \
         autoconf \
         libtool \
         git \
+        gnupg2 && \
+    apt-key adv --keyserver hkp://pool.sks-keyservers.net --recv 379CE192D401AB61 && \
+    echo "deb https://dl.bintray.com/kaitai-io/debian jessie main" \
+        | tee /etc/apt/sources.list.d/kaitai.list && \
+    apt-get update && \
+    apt-get install -y \
         kaitai-struct-compiler
 
 WORKDIR /app/mishegos
