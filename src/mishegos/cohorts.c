@@ -95,8 +95,9 @@ static void dump_cohort(output_cohort *cohort) {
 
     //number of workers
     write(STDOUT_FILENO, &nworkers, sizeof(nworkers));
+    DLOG("Number of nworkers: %u", nworkers);
     input_slot islot = cohort->outputs[0].input;
-    const char *input_hex = hexdump(&islot); // added the const maybe wrong
+    char *input_hex = hexdump(&islot);
 
     //input
     size_t input_hex_len = strlen(input_hex);
@@ -131,51 +132,6 @@ static void dump_cohort(output_cohort *cohort) {
     }
 
 }
-
-//static void dump_json_cohort(output_cohort *cohort) {
-//    DLOG("dumping cohort");
-//    uint32_t nworkers = GET_CONFIG()->nworkers;
-//    assert(cohort->workers == ~(~0 << nworkers) && "dump_cohort called on partial cohort");
-//
-//    JSON_Value *root_value = json_value_init_object();
-//    JSON_Object *cohort_obj = json_value_get_object(root_value);
-//
-//    input_slot islot = cohort->outputs[0].input;
-//    char *input_hex = hexdump(&islot);
-//    json_object_set_string(cohort_obj, "input", input_hex);
-//    free(input_hex);
-//
-//    JSON_Value *outputs_value = json_value_init_array();
-//    JSON_Array *outputs_arr = json_value_get_array(outputs_value);
-//    for (int i = 0; i < nworkers; ++i) {
-//        JSON_Value *output_value = json_value_init_object();
-//        JSON_Object *output = json_value_get_object(output_value);
-//
-//        json_object_set_number(output, "ndecoded", cohort->outputs[i].ndecoded);
-//        json_object_set_number(output, "len", cohort->outputs[i].len);
-//        if (cohort->outputs[i].len > 0) {
-//            json_object_set_string(output, "result", cohort->outputs[i].result);
-//        } else {
-//            json_object_set_null(output, "result");
-//        }
-//        json_object_set_number(output, "workerno", cohort->outputs[i].workerno);
-//        json_object_set_number(output, "status", cohort->outputs[i].status);
-//        json_object_set_string(output, "status_name", status2str(cohort->outputs[i].status));
-//
-//        const char *worker_so = get_worker_so(cohort->outputs[i].workerno);
-//        assert(worker_so != NULL);
-//        json_object_set_string(output, "worker_so", worker_so);
-//
-//        json_array_append_value(outputs_arr, output_value);
-//    }
-//    json_object_set_value(cohort_obj, "outputs", outputs_value);
-//
-//    char *dump = json_serialize_to_string(root_value);
-//    puts(dump);
-//    json_free_serialized_string(dump);
-//
-//    json_value_free(root_value);
-//}
 
 void dump_cohorts() {
   DLOG("dumping fully populated cohorts");
