@@ -13,13 +13,16 @@ RUN apt-get update && \
         autoconf \
         libtool \
         git \
-        gnupg2 && \
+        gnupg2 \
+        default-jre \
+        python3-pip && \
     apt-key adv --keyserver hkp://pool.sks-keyservers.net --recv 379CE192D401AB61 && \
     echo "deb https://dl.bintray.com/kaitai-io/debian jessie main" \
         | tee /etc/apt/sources.list.d/kaitai.list && \
     apt-get update && \
     apt-get install -y \
-        kaitai-struct-compiler
+        kaitai-struct-compiler && \
+    pip3 install kaitaistruct
 
 WORKDIR /app/mishegos
 COPY ./ .
