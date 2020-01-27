@@ -89,48 +89,46 @@ bool add_to_cohort(output_slot *slot) {
 }
 
 static void dump_cohort(output_cohort *cohort) {
-    DLOG("dumping cohort");
-    uint32_t nworkers = GET_CONFIG()->nworkers;
-    assert(cohort->workers == ~(~0 << nworkers) && "dump_cohort called on partial cohort");
+  DLOG("dumping cohort");
+  uint32_t nworkers = GET_CONFIG()->nworkers;
+  assert(cohort->workers == ~(~0 << nworkers) && "dump_cohort called on partial cohort");
 
-    //number of workers
-    write(STDOUT_FILENO, &nworkers, sizeof(nworkers));
-    DLOG("Number of nworkers: %u", nworkers);
-    input_slot islot = cohort->outputs[0].input;
-    char *input_hex = hexdump(&islot);
+  // number of workers
+  write(STDOUT_FILENO, &nworkers, sizeof(nworkers));
+  DLOG("Number of nworkers: %u", nworkers);
+  input_slot islot = cohort->outputs[0].input;
 
-    //input
-    size_t input_hex_len = strlen(input_hex);
-    write(STDOUT_FILENO, &input_hex_len, sizeof(input_hex_len));
-    write(STDOUT_FILENO, input_hex, input_hex_len);
-    free(input_hex);
+  // input
+  char *input_hex = hexdump(&islot);
+  size_t input_hex_len = strlen(input_hex);
+  write(STDOUT_FILENO, &input_hex_len, sizeof(input_hex_len));
+  write(STDOUT_FILENO, input_hex, input_hex_len);
+  free(input_hex);
 
+  for (int i = 0; i < nworkers; ++i) {
+    // status
+    write(STDOUT_FILENO, &cohort->outputs[i].status, sizeof(cohort->outputs[i].status));
 
-    for (int i = 0; i < nworkers; ++i) {
-        //status
-        write(STDOUT_FILENO, &cohort->outputs[i].status, sizeof(cohort->outputs[i].status));
+    // ndecoded
+    write(STDOUT_FILENO, &cohort->outputs[i].ndecoded, sizeof(cohort->outputs[i].ndecoded));
 
-        //ndecoded
-        write(STDOUT_FILENO, &cohort->outputs[i].ndecoded, sizeof(cohort->outputs[i].ndecoded));
+    // workerno
+    write(STDOUT_FILENO, &cohort->outputs[i].workerno, sizeof(cohort->outputs[i].workerno));
 
-        //workerno
-        write(STDOUT_FILENO, &cohort->outputs[i].workerno, sizeof(cohort->outputs[i].workerno));
+    // worker_so
+    const char *worker_so = get_worker_so(cohort->outputs[i].workerno);
+    assert(worker_so != NULL);
+    size_t worker_so_len = strlen(worker_so);
+    write(STDOUT_FILENO, &worker_so_len, sizeof(worker_so_len));
+    write(STDOUT_FILENO, worker_so, worker_so_len);
 
-        //worker_so
-        const char *worker_so = get_worker_so(cohort->outputs[i].workerno);
-        assert(worker_so != NULL);
-        size_t worker_so_len = strlen(worker_so);
-        write(STDOUT_FILENO, &worker_so_len, sizeof(worker_so_len));
-        write(STDOUT_FILENO, worker_so, worker_so_len);
-
-        //len
-        write(STDOUT_FILENO, &cohort->outputs[i].len, sizeof(cohort->outputs[i].len));
-        if (cohort->outputs[i].len > 0) {
-            //result
-            write(STDOUT_FILENO, cohort->outputs[i].result, cohort->outputs[i].len);
-        }
+    // len
+    write(STDOUT_FILENO, &cohort->outputs[i].len, sizeof(cohort->outputs[i].len));
+    if (cohort->outputs[i].len > 0) {
+      // result
+      write(STDOUT_FILENO, cohort->outputs[i].result, cohort->outputs[i].len);
     }
-
+  }
 }
 
 void dump_cohorts() {
