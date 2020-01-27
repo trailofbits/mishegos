@@ -10,7 +10,7 @@ export CXXFLAGS := \
 	-I$(shell pwd)/src/vendor/include
 
 ALL_SRCS := $(shell \
- 	find . -type f \
+	find . -type f \
 	\( \
 		-path '*/capstone/capstone/*' -o \
 		-path '*/vendor/*' -o \
