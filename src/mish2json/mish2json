@@ -34,7 +34,7 @@ class FormattingJSON:
         # create a dictionary for each cohort
         cohorts = {
             "nworkers": num_workers,
-            "inputs": output_file.total_cohorts[i].input,
+            "input": output_file.total_cohorts[i].input,
             "outputs": output_list,
         }
         # convert each Json to file
