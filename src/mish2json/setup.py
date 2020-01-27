@@ -2,6 +2,7 @@ import json
 import sys
 from cohort import Cohort
 
+
 class FormattingJSON:
     # opening file reading from
     output_file = Cohort.from_io(sys.stdin.buffer)
