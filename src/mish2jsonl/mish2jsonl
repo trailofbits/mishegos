@@ -1,0 +1,38 @@
+#!/usr/bin/env python3
+
+import json
+import sys
+from cohorts import Cohorts
+
+
+def main():
+    cohorts = Cohorts.from_io(sys.stdin.buffer)
+
+    for cohort in cohorts.cohorts:
+        outputs = []
+        for output in cohort.outputs:
+            outputs.append(
+                {
+                    "status": {
+                        "value": output.status.value,
+                        "name": output.status.name.upper(),
+                    },
+                    "ndecoded": output.ndecoded,
+                    "workerno": output.workerno,
+                    "worker_so": output.worker_so,
+                    "len": output.len,
+                    "result": output.result,
+                }
+            )
+
+        cohort = {
+            "nworkers": cohort.nworkers,
+            "input": cohort.input,
+            "outputs": outputs,
+        }
+
+        print(json.dumps(cohort), file=sys.stdout)
+
+
+if __name__ == "__main__":
+    main()

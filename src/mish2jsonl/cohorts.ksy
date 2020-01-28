@@ -1,15 +1,15 @@
 meta:
-  id: cohort
+  id: cohorts
   endian: le
 
 seq:
-  - id: total_cohorts
-    type: entry
+  - id: cohorts
+    type: cohort
     repeat: eos
-    
+
 types:
-  entry: 
-    seq: 
+  cohort:
+    seq:
       - id: nworkers
         type: u4
       - id: input_length
@@ -18,11 +18,11 @@ types:
         size: input_length
         type: str
         encoding: ascii
-      - id: type
-        type: cohort_type
+      - id: outputs
+        type: output
         repeat: expr
         repeat-expr: nworkers
-  cohort_type:
+  output:
     seq:
       - id: status
         type: u4
@@ -36,14 +36,14 @@ types:
       - id: worker_so
         size: worker_so_length
         type: str
-        encoding: ascii 
+        encoding: ascii
       - id: len
         type: u2
       - id: result
         size: len
         type: str
-        encoding: ascii 
-        
+        encoding: ascii
+
 enums:
   decode_status:
     0: s_none
