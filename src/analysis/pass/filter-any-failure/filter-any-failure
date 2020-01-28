@@ -11,7 +11,7 @@ count = 0
 STDIN.each_line do |line|
   result = JSON.parse line, symbolize_names: true
 
-  if result[:outputs].any? { |o| o[:status_name] == "failure" }
+  if result[:outputs].any? { |o| o[:status][:name] == "S_FAILURE" }
     count += 1
     next
   end

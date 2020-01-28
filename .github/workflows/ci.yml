@@ -30,6 +30,23 @@ jobs:
         git submodule sync --recursive
         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive
     - name: Install dependencies
-      run: sudo apt install -y build-essential binutils-dev python python3 cmake meson ruby autotools-dev autoconf libtool
+      run: |
+        sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com --recv 379CE192D401AB61
+        echo "deb https://dl.bintray.com/kaitai-io/debian jessie main" \
+          | sudo tee /etc/apt/sources.list.d/kaitai.list
+        sudo apt-get update
+
+        sudo apt-get install -y \
+          build-essential \
+          binutils-dev \
+          python \
+          python3 \
+          cmake \
+          meson \
+          ruby \
+          autotools-dev \
+          autoconf \
+          libtool \
+          kaitai-struct-compiler
     - name: Build
       run: make -j$(nproc)

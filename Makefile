@@ -1,13 +1,11 @@
 export CFLAGS := \
 	-std=gnu11 -Wall -Werror -pthread \
-	-I$(shell pwd)/src/include \
-	-I$(shell pwd)/src/vendor/include
+	-I$(shell pwd)/src/include
 export LDLIBS := -ldl -lrt -lpthread
 export CPPFLAGS :=
 export CXXFLAGS := \
 	-std=c++11 -Wall -Werror -pthread \
-	-I$(shell pwd)/src/include \
-	-I$(shell pwd)/src/vendor/include
+	-I$(shell pwd)/src/include
 
 ALL_SRCS := $(shell \
 	find . -type f \
@@ -26,7 +24,7 @@ ALL_SRCS := $(shell \
 )
 
 .PHONY: all
-all: mishegos worker
+all: mishegos worker mish2jsonl
 
 .PHONY: debug
 debug: CPPFLAGS += -DDEBUG
@@ -40,6 +38,10 @@ mishegos:
 .PHONY: worker
 worker:
 	$(MAKE) -C src/worker
+
+.PHONY: mish2jsonl
+mish2jsonl:
+	$(MAKE) -C src/mish2jsonl
 
 .PHONY: fmt
 fmt:
@@ -61,3 +63,4 @@ clean:
 .PHONY: update-submodules
 update-submodules:
 	git submodule foreach git pull origin master
+

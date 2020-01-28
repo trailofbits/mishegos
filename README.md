@@ -38,7 +38,7 @@ make debug
 Run the fuzzer for a bit:
 
 ```bash
-./src/mishegos/mishegos ./workers.spec
+./src/mishegos/mishegos ./workers.spec > /tmp/mishegos
 ```
 
 `mishegos` checks for three environment variables:
@@ -47,10 +47,18 @@ Run the fuzzer for a bit:
 * `D=1` enables the "dummy" mutation mode for debugging purposes
 * `M=1` enables the "manual" mutation mode (i.e., read from `stdin`)
 
+Convert mishegos's raw output into JSONL suitable for analysis:
+
+```bash
+./src/mish2jsonl < /tmp/mishegos > /tmp/mishegos.jsonl
+```
+
+`mish2jsonl` checks for `V=1` to enable verbose output on `stderr`.
+
 Run an analysis/filter pass group on the results:
 
 ```bash
-./src/analysis/analysis -p same-size-different-decodings  < /tmp/mishegos > /tmp/mishegos.interesting
+./src/analysis/analysis -p same-size-different-decodings < /tmp/mishegos.jsonl > /tmp/mishegos.interesting
 ```
 
 Generate an ~ugly~ pretty visualization of the filtered results:

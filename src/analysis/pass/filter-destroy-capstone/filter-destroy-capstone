@@ -19,7 +19,7 @@ STDIN.each_line do |line|
   xed = result[:outputs].find { |o| o[:worker_so] == XED_SO }
   zydis = result[:outputs].find { |o| o[:worker_so] == ZYDIS_SO }
 
-  if capstone[:status] == xed[:status] && capstone[:status] == zydis[:status]
+  if capstone[:status][:value] == xed[:status][:value] && capstone[:status] == zydis[:status][:value]
     next
   end
 
