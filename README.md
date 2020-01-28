@@ -53,10 +53,12 @@ Convert mishegos's raw output into JSONL suitable for analysis:
 ./src/mish2jsonl < /tmp/mishegos > /tmp/mishegos.jsonl
 ```
 
+`mish2jsonl` checks for `V=1` to enable verbose output on `stderr`.
+
 Run an analysis/filter pass group on the results:
 
 ```bash
-./src/analysis/analysis -p same-size-different-decodings  < /tmp/mishegos.jsonl > /tmp/mishegos.interesting
+./src/analysis/analysis -p same-size-different-decodings < /tmp/mishegos.jsonl > /tmp/mishegos.interesting
 ```
 
 Generate an ~ugly~ pretty visualization of the filtered results:
