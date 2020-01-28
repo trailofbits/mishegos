@@ -16,7 +16,7 @@ RUN apt-get update && \
         gnupg2 \
         default-jre \
         python3-pip && \
-    apt-key adv --keyserver hkp://pgp.mit.edu --recv 379CE192D401AB61 && \
+    apt-key adv --keyserver hkp://keyserver.ubuntu.com --recv 379CE192D401AB61 && \
     echo "deb https://dl.bintray.com/kaitai-io/debian jessie main" \
         | tee /etc/apt/sources.list.d/kaitai.list && \
     apt-get update && \
