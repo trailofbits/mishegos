@@ -73,7 +73,7 @@ ENTRY_ROW = ERB.new <<~HTML
       <code><%= row[:input] %></code>
     </td>
     <% row[:outputs].each do |col| %>
-      <td style="background-color: <%= COLOR_TABLE[col[:status_name]] %>">
+      <td style="background-color: <%= COLOR_TABLE[col[:status][:name]] %>">
         <code><%= col[:result] %></code> (<%= col[:ndecoded] %> / <%= col[:len] %>)
       </td>
     <% end %>
