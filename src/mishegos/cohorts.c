@@ -1,13 +1,8 @@
 #include "mish_core.h"
-#include "parson.h"
 
 static output_cohort cohorts[MISHEGOS_COHORT_NSLOTS];
 
 void cohorts_init() {
-  // NOTE(ww): We don't need to call this with each cohort dump,
-  // so just put it here.
-  json_set_escape_slashes(0);
-
   uint32_t nworkers = GET_CONFIG()->nworkers;
   for (int i = 0; i < MISHEGOS_COHORT_NSLOTS; ++i) {
     cohorts[i].outputs = malloc(sizeof(output_slot) * nworkers);

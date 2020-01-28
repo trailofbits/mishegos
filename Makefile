@@ -1,13 +1,11 @@
 export CFLAGS := \
 	-std=gnu11 -Wall -Werror -pthread \
-	-I$(shell pwd)/src/include \
-	-I$(shell pwd)/src/vendor/include
+	-I$(shell pwd)/src/include
 export LDLIBS := -ldl -lrt -lpthread
 export CPPFLAGS :=
 export CXXFLAGS := \
 	-std=c++11 -Wall -Werror -pthread \
-	-I$(shell pwd)/src/include \
-	-I$(shell pwd)/src/vendor/include
+	-I$(shell pwd)/src/include
 
 ALL_SRCS := $(shell \
 	find . -type f \
