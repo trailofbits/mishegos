@@ -3,7 +3,7 @@ override CPPFLAGS := $(CPPFLAGS) \
 	-Izydis/include \
 	-Izydis/dependencies/zycore/include \
 	-Izydis/build \
-	-Izydis/build/dependencies/zycore
+	-Izydis/build/zycore
 
 .PHONY: all
 all: zydis.so
