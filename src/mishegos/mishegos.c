@@ -45,7 +45,6 @@ int main(int argc, char const *argv[]) {
   if (strcmp(argv[1], "-Xc") == 0) {
     cleanup();
     return 0;
-  } else if (strcmp(argv[1], "-Xm") == 0) {
   }
 
   verbose = (getenv("V") != NULL);
@@ -231,21 +230,27 @@ static void arena_init() {
 
 static void cleanup() {
   DLOG("cleaning up");
-  uint32_t nworkers = GET_CONFIG()->nworkers;
-  for (int i = 0; i < nworkers; ++i) {
-    if (workers[i].running) {
-      kill(workers[i].pid, SIGINT);
-      waitpid(workers[i].pid, NULL, 0);
-    }
 
-    if (workers[i].so != NULL) {
-      free(workers[i].so);
+  if (GET_CONFIG() != NULL) {
+    uint32_t nworkers = GET_CONFIG()->nworkers;
+    for (int i = 0; i < nworkers; ++i) {
+      if (workers[i].running) {
+        kill(workers[i].pid, SIGINT);
+        waitpid(workers[i].pid, NULL, 0);
+      }
+
+      if (workers[i].so != NULL) {
+        free(workers[i].so);
+      }
     }
   }
 
   // NOTE(ww): We don't care if these functions fail.
   shm_unlink(MISHEGOS_SHMNAME);
-  munmap(mishegos_arena, MISHEGOS_SHMSIZE);
+
+  if (mishegos_arena != NULL) {
+    munmap(mishegos_arena, MISHEGOS_SHMSIZE);
+  }
 
   for (int i = 0; i < MISHEGOS_IN_NSLOTS; ++i) {
     char sem_name[NAME_MAX + 1] = {};
@@ -450,14 +455,14 @@ static void do_outputs() {
   for (int i = MISHEGOS_OUT_NSLOTS - 1; i >= 0; i--) {
     sem_wait(mishegos_osems[i]);
 
-    output_slot *slot = GET_O_SLOT(0);
+    output_slot *slot = GET_O_SLOT(i);
     if (slot->status == S_NONE) {
-      DLOG("output slot still waiting on a result");
+      DLOG("output slot %d still waiting on a result", i);
       goto done;
     }
 
     if (!add_to_cohort(slot)) {
-      DLOG("output slot still waiting on a cohort slot");
+      DLOG("output slot %d still waiting on a cohort slot", i);
       goto done;
     }
 
@@ -465,6 +470,7 @@ static void do_outputs() {
      */
     slot->status = S_NONE;
     counts.oslots++;
+    DLOG("output slot %d is available again", i);
 
   done:
     sem_post(mishegos_osems[i]);
