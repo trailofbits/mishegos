@@ -13,6 +13,7 @@ ALL_SRCS := $(shell \
 		-path '*/capstone/capstone/*' -o \
 		-path '*/vendor/*' -o \
 		-path '*/dynamorio/dynamorio/*' -o \
+		-path '*/dynamorio/obj/*' -o \
 		-path '*/fadec/fadec/*' -o \
 		-path '*/udis86/udis86/*' -o \
 		-path '*/xed/xed/*' -o \
