@@ -45,9 +45,9 @@
 #define MISHEGOS_INSN_MAXLEN 15
 #define MISHEGOS_DEC_MAXLEN 1018
 
-#define MISHEGOS_IN_NSLOTS 10 // TODO(ww): Increase
+#define MISHEGOS_IN_NSLOTS 10 // TODO(ww): Increase?
 static_assert(MISHEGOS_IN_NSLOTS >= 2, "MISHEGOS_IN_NSLOTS should be >= 2");
-#define MISHEGOS_OUT_NSLOTS 50 // TODO(ww): Increase
+#define MISHEGOS_OUT_NSLOTS 10 // TODO(ww): Increase?
 
 /* Size of our worker bitmask, minus 1 (to avoid UB).
  */

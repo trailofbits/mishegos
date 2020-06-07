@@ -198,11 +198,22 @@ static void put_first_available_output_slot() {
         goto done;
       }
 
+      DLOG("%s: output slot=%d is free, using", worker_name, i);
       memcpy(dest, &output, sizeof(output_slot));
       available = true;
 
     done:
       sem_post(mishegos_osems[i]);
+
+      /* NOTE(ww): This is really unpleasant: We have to explicitly break out
+       * of our inner loop here, to avoid filling *every* available slot
+       * with the same output (which would subsequently break the cohort collector
+       * when it tries to uniq the outputs). I'm sure there's a cleaner way to
+       * express this.
+       */
+      if (available) {
+        break;
+      }
     }
   }
 }
