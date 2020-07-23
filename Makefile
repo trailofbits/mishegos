@@ -19,6 +19,7 @@ ALL_SRCS := $(shell \
 		-path '*/xed/xed/*' -o \
 		-path '*/xed/mbuild/*' -o \
 		-path '*/zydis/zydis/*' \
+		-path '*/bddisasm/bddisasm/*' \
 	\) \
 	-prune \
 	-o \( -name '*.c' -o -name '*.h' \) -print \

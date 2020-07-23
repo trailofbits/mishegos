@@ -4,7 +4,8 @@ WORKERS = bfd \
 	fadec \
 	udis86 \
 	xed \
-	zydis
+	zydis \
+	bddisasm
 
 .PHONY: all
 all: worker $(WORKERS)
