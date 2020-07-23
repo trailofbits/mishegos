@@ -19,3 +19,7 @@
 [submodule "src/worker/fadec/fadec"]
 	path = src/worker/fadec/fadec
 	url = https://github.com/aengelke/fadec.git
+[submodule "src/worker/bddisasm/bddisasm"]
+	path = src/worker/bddisasm/bddisasm
+	url = https://github.com/bitdefender/bddisasm.git
+	branch = master
