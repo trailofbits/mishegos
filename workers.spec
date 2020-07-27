@@ -5,3 +5,4 @@
 ./src/worker/udis86/udis86.so
 ./src/worker/xed/xed.so
 ./src/worker/zydis/zydis.so
+./src/worker/bddisasm/bddisasm.so
