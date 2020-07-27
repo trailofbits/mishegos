@@ -74,7 +74,7 @@ static const char *bddisasm_strerror(NDSTATUS ndstatus) {
   case ND_STATUS_MASK_REQUIRED: {
     return "Masking is mandatory.";
   }
-  case ND_STATUS_ER_SAE_NOT_SUPPORTED : {
+  case ND_STATUS_ER_SAE_NOT_SUPPORTED: {
     return "Embedded rounding/SAE not supported.";
   }
   case ND_STATUS_ZEROING_NOT_SUPPORTED: {
