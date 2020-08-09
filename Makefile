@@ -43,7 +43,7 @@ worker:
 
 .PHONY: mish2jsonl
 mish2jsonl:
-	$(MAKE) -C src/mish2jsonl
+	$(MAKE) -C  src/mish2jsonl 
 
 .PHONY: fmt
 fmt:
@@ -61,6 +61,7 @@ edit:
 clean:
 	$(MAKE) -C src/worker clean
 	$(MAKE) -C src/mishegos clean
+	$(MAKE) -C src/mish2jsonl clean
 
 .PHONY: update-submodules
 update-submodules:

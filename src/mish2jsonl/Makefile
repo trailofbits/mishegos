@@ -1,8 +1,14 @@
-.PHONY: all
-all: cohorts.py
+SRCS = $(wildcard *.c)
+OBJS = $(SRCS:.c=.o)
 
-cohorts.py: cohorts.ksy
-	kaitai-struct-compiler -t python --outdir . cohorts.ksy
+PROG = mish2jsonl
+
+.PHONY: all
+all: $(PROG)
+
+$(PROG): $(OBJS) 
 
 .PHONY: clean
-	rm -f cohorts.py
+clean:
+	rm -rf $(PROG) $(OBJS)
+
