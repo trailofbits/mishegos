@@ -63,14 +63,14 @@ void m_fread(void *ref, size_t size, size_t times, FILE *file) {
     2) Some disassemblers like to insert \n in their output
     this breaks values from being a valid string
 
-    3) at the moment we alloc the memory of the string here 
-    using malloc will result in padded whitespaces showing 
-    old data that we don't want. Hence the use of calloc 
-    if this is only used for printing one-by-one 
-    we can optimize this out 
- 
-    we implicitly calloc 1 extra byte to guarantee 
-    the string ends with a null byte (implicit calloc logic) 
+    3) at the moment we alloc the memory of the string here
+    using malloc will result in padded whitespaces showing
+    old data that we don't want. Hence the use of calloc
+    if this is only used for printing one-by-one
+    we can optimize this out
+
+    we implicitly calloc 1 extra byte to guarantee
+    the string ends with a null byte (implicit calloc logic)
 */
 
 void read_string(FILE *file, m_string *s, int len_size) {
