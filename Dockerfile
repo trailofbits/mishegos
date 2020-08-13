@@ -12,10 +12,8 @@ RUN apt-get update && \
         autotools-dev \
         autoconf \
         libtool \
-        git \
-        gnupg2 \
-        default-jre \
-        python3-pip 
+        git 
+
 WORKDIR /app/mishegos
 COPY ./ .
 

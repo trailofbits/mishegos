@@ -1,6 +1,5 @@
-#ifndef M_MISH2JSONL
-#define M_MISH2JSONL
+#pragma once
 #include <stdio.h>
-void m_print_results_jsonl(FILE *output_file);
-void m_print_results_json(FILE *output_file);
-#endif
+
+void m_print_results_jsonl(FILE *input_file, FILE *output_file);
+void m_print_results_json(FILE *input_file, *output_file);

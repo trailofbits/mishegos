@@ -23,11 +23,10 @@ typedef struct cohort_results {
   worker_output *outputs;
 } cohort_results;
 
-cohort_results results;
-FILE *m_parsing_file;
-int m_finished_parsing;
+static cohort_results results;
+static int m_finished_parsing;
 
-void m_cohort_print_json(FILE *f, cohort_results *r) {
+static void m_cohort_print_json(FILE *f, cohort_results *r) {
   fprintf(f, "{ \"nworkers\": %u, \"input\": \"%s\", \"outputs\": [", r->nworkers, r->input.string);
   for (int i = 0; i < r->nworkers; i++) {
     if (i != 0) {
@@ -38,17 +37,18 @@ void m_cohort_print_json(FILE *f, cohort_results *r) {
             "%u, \"worker_so\": \"%s\",\"len\": %ld, \"result\": \"%s\" }",
             r->outputs[i].status, status2str(r->outputs[i].status), r->outputs[i].ndecoded,
             r->outputs[i].workerno, r->outputs[i].workerso.string, r->outputs[i].result.len,
-            r->outputs[i].status == 1 ? r->outputs[i].result.string : "bad");
+            r->outputs[i].result.string);
   }
 
   fprintf(f, "]}");
   return;
 }
 
-void m_fread(void *ref, size_t size, size_t times, FILE *file) {
+static void m_fread(void *ref, size_t size, size_t times, FILE *file) {
   size_t rd = fread(ref, size, times, file);
-  if (rd == 0 &&
-      size * times != 0) { // in cases of bad decompilation we want to read 0 length result string
+
+  // reading a 0 length string can be valid if disassembeling failed
+  if (rd == 0 && size * times != 0) {
     m_finished_parsing = 1;
   }
 }
@@ -73,16 +73,14 @@ void m_fread(void *ref, size_t size, size_t times, FILE *file) {
     the string ends with a null byte (implicit calloc logic)
 */
 
-void read_string(FILE *file, m_string *s, int len_size) {
+static void read_string(FILE *file, m_string *s, int len_size) {
   uint64_t string_length = 0;
   m_fread(&string_length, len_size, 1, file);
 
-  char *input =
-      calloc(1, sizeof(char) * string_length +
-                    1); // calloc instead of malloc because we want to zero out the memory.
-  m_fread(input, sizeof(char), string_length,
-          file); // this is because we tend to reuse the same memory alot (we optimize this call out
-                 // probably)
+  // calloc instead of malloc because we want to zero out the memory.
+  char *input = calloc(1, sizeof(char) * string_length + 1);
+  // this is because we tend to reuse the same memory alot (we optimize this out)
+  m_fread(input, sizeof(char), string_length, file);
 
   int newsize = strcspn(input, "\n");
   input[newsize] = '\0';
@@ -90,7 +88,7 @@ void read_string(FILE *file, m_string *s, int len_size) {
   s->string = input;
 }
 
-int read_next(FILE *file) {
+static int read_next(FILE *file) {
   fread(&results.nworkers, sizeof(uint32_t), 1, file);
   results.outputs = malloc(sizeof(worker_output) * results.nworkers);
   read_string(file, &results.input, 8);
@@ -107,7 +105,7 @@ int read_next(FILE *file) {
   return m_finished_parsing == 0;
 }
 
-void free_cohort_results(cohort_results *result) {
+static void free_cohort_results(cohort_results *result) {
   free(results.input.string);
   for (int i = 0; i < results.nworkers; i++) {
     free(results.outputs[i].workerso.string);
@@ -116,45 +114,69 @@ void free_cohort_results(cohort_results *result) {
   free(results.outputs);
 }
 
-void m_print_results_json(FILE *output_file) {
+void m_print_results_json(FILE *input_file, FILE *output_file) {
+  m_finished_parsing = 0;
   int is_first = 1;
-  printf("[");
-  while (read_next(m_parsing_file)) {
+
+  fprintf(output_file, "[");
+  while (read_next(input_file)) {
     if (!m_finished_parsing) {
       if (!is_first) {
         printf(",");
       }
       m_cohort_print_json(output_file, &results);
       free_cohort_results(&results);
-      printf("\n");
+      fprintf(output_file, "\n");
       is_first = 0;
     }
   }
+  fprintf(output_file, "]");
 }
 
-void m_print_results_jsonl(FILE *output_file) {
-  while (read_next(m_parsing_file)) {
+void m_print_results_jsonl(FILE *input_file, FILE *output_file) {
+  m_finished_parsing = 0;
+
+  while (read_next(input_file)) {
     m_cohort_print_json(output_file, &results);
     free_cohort_results(&results);
-    printf("\n");
+    fprintf(output_file, "\n");
   }
 }
 
 int main(int argc, char **argv) {
-  m_finished_parsing = 0;
-  if (argc != 2) {
-    printf("error: require path to file");
-    return 0;
+  enum { JSON, JSONL } mode = JSONL;
+  int opt;
+  while ((opt = getopt(argc, argv, "hn")) != -1) {
+    switch (opt) {
+    case 'h':
+      fprintf(stdout,
+              "Convert mishegos output to json(l) \nOPTIONS: -n switches output from "
+              "jsonl(default) to json \nUsage: %s [-n] [file]\n",
+              argv[0]);
+      exit(EXIT_SUCCESS);
+    case 'n':
+      mode = JSON;
+      break;
+    default:
+      err(1, "Usage: %s [-n] [file...]\n", argv[0]);
+    }
+  }
+  // no file has been given
+  if (argc - optind != 1) {
+    errx(1, "Usage: %s [file]\n", argv[0]);
   }
 
-  m_parsing_file = fopen(argv[1], "r");
-  if (m_parsing_file == NULL) {
-    printf("couldn't open file!");
-    return 0;
+  FILE *input = fopen(argv[optind], "r");
+  if (input == NULL) {
+    errx(1, "%s", strerror(errno));
   }
 
-  m_print_results_jsonl(stdout);
+  if (mode == JSONL) {
+    m_print_results_jsonl(input, stdout);
+  } else {
+    m_print_results_json(input, stdout);
+  }
 
-  fclose(m_parsing_file);
+  fclose(input);
   return 0;
 }
