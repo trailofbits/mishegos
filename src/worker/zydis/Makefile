@@ -26,4 +26,4 @@ zydis.o: zydis/build/libZydis.a zydis.c
 .PHONY: clean
 clean:
 	rm -rf *.o *.so
-	cd zydis/build && cmake --build . --target clean
+	rm -rf zydis/build
