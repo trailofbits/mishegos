@@ -50,7 +50,7 @@ Run the fuzzer for a bit:
 Convert mishegos's raw output into JSONL suitable for analysis:
 
 ```bash
-./src/mish2jsonl < /tmp/mishegos > /tmp/mishegos.jsonl
+./src/mish2jsonl/mish2jsonl /tmp/mishegos > /tmp/mishegos.jsonl
 ```
 
 `mish2jsonl` checks for `V=1` to enable verbose output on `stderr`.
