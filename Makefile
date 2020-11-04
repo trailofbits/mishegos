@@ -18,7 +18,7 @@ ALL_SRCS := $(shell \
 		-path '*/udis86/udis86/*' -o \
 		-path '*/xed/xed/*' -o \
 		-path '*/xed/mbuild/*' -o \
-		-path '*/zydis/zydis/*' \
+		-path '*/zydis/zydis/*' -o \
 		-path '*/bddisasm/bddisasm/*' \
 	\) \
 	-prune \
@@ -43,7 +43,7 @@ worker:
 
 .PHONY: mish2jsonl
 mish2jsonl:
-	$(MAKE) -C  src/mish2jsonl 
+	$(MAKE) -C  src/mish2jsonl
 
 .PHONY: fmt
 fmt:
