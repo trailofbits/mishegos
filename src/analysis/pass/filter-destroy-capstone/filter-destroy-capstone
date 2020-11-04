@@ -12,6 +12,7 @@ ZYDIS_SO = "./src/worker/zydis/zydis.so"
 
 STDERR.puts "[+] pass: filter-destroy-capstone"
 
+count = 0
 STDIN.each_line do |line|
   result = JSON.parse line, symbolize_names: true
 
@@ -20,10 +21,11 @@ STDIN.each_line do |line|
   zydis = result[:outputs].find { |o| o[:worker_so] == ZYDIS_SO }
 
   if capstone[:status][:value] == xed[:status][:value] && capstone[:status] == zydis[:status][:value]
+    count += 1
     next
   end
 
   STDOUT.puts result.to_json
 end
 
-STDERR.puts "[+] pass: filter-destroy-capstone done"
+STDERR.puts "[+] pass: filter-destroy-capstone done: #{count} filtered"
