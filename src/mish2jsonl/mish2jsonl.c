@@ -150,26 +150,29 @@ int main(int argc, char **argv) {
     switch (opt) {
     case 'h':
       fprintf(stdout,
-              "Convert mishegos output to json(l) \nOPTIONS: -n switches output from "
-              "jsonl(default) to json \nUsage: %s [-n] [file]\n",
+              "Convert mishegos output to JSON or JSONL\n"
+              "OPTIONS: -n switches output from JSONL (default) to JSON\n"
+              "Usage: %s [-n] [input]\n",
               argv[0]);
-      exit(EXIT_SUCCESS);
+      return 0;
     case 'n':
       mode = JSON;
       break;
     default:
-      err(1, "Usage: %s [-n] [file...]\n", argv[0]);
+      fprintf(stderr, "Usage: %s [-n] [input]\n", argv[0]);
+      return 1;
     }
   }
 
-  // no file has been given
+  // Default to stdin.
+  FILE *input;
   if (argc - optind != 1) {
-    errx(1, "Usage: %s [file]\n", argv[0]);
-  }
-
-  FILE *input = fopen(argv[optind], "r");
-  if (input == NULL) {
-    err(errno, "fopen");
+    input = stdin;
+  } else {
+    input = fopen(argv[optind], "r");
+    if (input == NULL) {
+      err(errno, "fopen");
+    }
   }
 
   if (mode == JSONL) {
