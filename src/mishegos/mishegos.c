@@ -118,6 +118,10 @@ static void load_worker_spec(char const *spec) {
       continue;
     }
 
+    if (access(workers[nworkers].so, R_OK) < 0) {
+      err(errno, "access (read): %s", workers[nworkers].so);
+    }
+
     DLOG("got worker %d so: %s", nworkers, workers[nworkers].so);
     nworkers++;
   }
