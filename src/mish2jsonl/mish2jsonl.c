@@ -161,6 +161,7 @@ int main(int argc, char **argv) {
       err(1, "Usage: %s [-n] [file...]\n", argv[0]);
     }
   }
+
   // no file has been given
   if (argc - optind != 1) {
     errx(1, "Usage: %s [file]\n", argv[0]);
@@ -168,7 +169,7 @@ int main(int argc, char **argv) {
 
   FILE *input = fopen(argv[optind], "r");
   if (input == NULL) {
-    errx(1, "%s", strerror(errno));
+    err(errno, "fopen");
   }
 
   if (mode == JSONL) {
