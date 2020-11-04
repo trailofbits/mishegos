@@ -13,4 +13,5 @@ bddisasm.so: bddisasm/bin/x64/Release/bddisasm.a bddisasm.o
 
 .PHONY: clean
 clean:
+	$(MAKE) -C bddisasm clean
 	rm -rf *.o *.so

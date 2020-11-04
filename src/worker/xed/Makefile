@@ -20,4 +20,5 @@ xed.o: xed/kits/xed-mishegos/libxed.so xed.c
 
 .PHONY: clean
 clean:
+	cd xed && python3 ./mfile.py clean && rm -rf kits
 	rm -rf *.o *.so

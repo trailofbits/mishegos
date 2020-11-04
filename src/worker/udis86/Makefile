@@ -23,3 +23,5 @@ udis86.o: udis86/build/lib/libudis86.so udis86.c
 
 .PHONY: clean
 clean:
+	make -C udis86 clean
+	rm -rf *.o *.so
