@@ -1,8 +1,7 @@
 FROM ubuntu:latest
 
-RUN DEBIAN_FRONTEND="noninteractive" \
-    apt-get update && \
-    apt-get install -y \
+RUN apt-get update
+RUN DEBIAN_FRONTEND="noninteractive" apt-get install -y \
         build-essential \
         binutils-dev \
         python \
