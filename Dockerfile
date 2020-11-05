@@ -1,6 +1,7 @@
 FROM ubuntu:latest
 
-RUN apt-get update && \
+RUN DEBIAN_FRONTEND="noninteractive" \
+    apt-get update && \
     apt-get install -y \
         build-essential \
         binutils-dev \
@@ -12,7 +13,7 @@ RUN apt-get update && \
         autotools-dev \
         autoconf \
         libtool \
-        git 
+        git
 
 WORKDIR /app/mishegos
 COPY ./ .
