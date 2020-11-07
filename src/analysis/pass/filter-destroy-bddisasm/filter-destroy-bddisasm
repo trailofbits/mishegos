@@ -10,7 +10,7 @@ BDDISASM_SO = "./src/worker/bddisasm/bddisasm.so"
 XED_SO = "./src/worker/xed/xed.so"
 ZYDIS_SO = "./src/worker/zydis/zydis.so"
 
-STDERR.puts "[+] pass: filter-destroy-capstone"
+STDERR.puts "[+] pass: filter-destroy-bddisasm"
 
 count = 0
 STDIN.each_line do |line|
