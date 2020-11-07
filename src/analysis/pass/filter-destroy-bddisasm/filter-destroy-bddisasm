@@ -1,0 +1,31 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# filter-destroy-bddisasm: find results that only bddisasm gets right (or wrong)
+
+require "json"
+
+# TODO(ww): Remove this.
+BDDISASM_SO = "./src/worker/bddisasm/bddisasm.so"
+XED_SO = "./src/worker/xed/xed.so"
+ZYDIS_SO = "./src/worker/zydis/zydis.so"
+
+STDERR.puts "[+] pass: filter-destroy-capstone"
+
+count = 0
+STDIN.each_line do |line|
+  result = JSON.parse line, symbolize_names: true
+
+  bddisasm = result[:outputs].find { |o| o[:worker_so] == BDDISASM_SO }
+  xed = result[:outputs].find { |o| o[:worker_so] == XED_SO }
+  zydis = result[:outputs].find { |o| o[:worker_so] == ZYDIS_SO }
+
+  if bddisasm[:status][:value] == xed[:status][:value] && bddisasm[:status] == zydis[:status][:value]
+    count += 1
+    next
+  end
+
+  STDOUT.puts result.to_json
+end
+
+STDERR.puts "[+] pass: filter-destroy-bddisasm done: #{count} filtered"
