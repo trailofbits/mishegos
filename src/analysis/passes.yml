@@ -26,3 +26,10 @@ destroy-capstone:
   - filter-destroy-capstone
   - minimize-input
   - normalize
+
+destroy-bddisasm:
+  - filter-all-success
+  - filter-ndecoded
+  - filter-destroy-bddisasm
+  - minimize-input
+  - normalize

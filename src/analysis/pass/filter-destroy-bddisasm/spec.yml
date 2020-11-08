@@ -1,0 +1,3 @@
+name: filter-destroy-bddisasm
+desc: Find results that only bddisasm gets right (or wrong)
+run: filter-destroy-bddisasm
