@@ -1,0 +1,21 @@
+[package]
+name = "iced"
+version = "1.0.0"
+authors = ["mishegos"]
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies.iced-x86]
+default-features = false
+features = ["std", "decoder", "intel"]
+path = "./iced/src/rust/iced-x86"
+
+[build-dependencies]
+bindgen = "*"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = 3

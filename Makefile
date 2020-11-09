@@ -6,6 +6,9 @@ export CPPFLAGS :=
 export CXXFLAGS := \
 	-std=c++11 -Wall -Werror -pthread \
 	-I$(shell pwd)/src/include
+export RUSTFLAGS := -D warnings
+export RUST_BINDGEN_CLANG_ARGS := \
+	-I$(shell pwd)/src/include
 
 ALL_SRCS := $(shell \
 	find . -type f \

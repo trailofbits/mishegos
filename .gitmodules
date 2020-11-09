@@ -23,3 +23,6 @@
 	path = src/worker/bddisasm/bddisasm
 	url = https://github.com/bitdefender/bddisasm.git
 	branch = master
+[submodule "src/worker/iced/iced"]
+	path = src/worker/iced/iced
+	url = https://github.com/0xd4d/iced.git
