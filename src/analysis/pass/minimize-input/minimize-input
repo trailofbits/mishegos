@@ -7,10 +7,18 @@ require "json"
 
 STDERR.puts "[+] pass: minimize-input"
 
+count = 0
 STDIN.each_line do |line|
   result = JSON.parse line, symbolize_names: true
 
   max_ndecoded = result[:outputs].map { |o| o[:ndecoded] }.max
+
+  # If the maximum ndecoded is 0, then all are 0 and we should skip
+  # this cohort entirely.
+  if max_ndecoded.zero?
+    count += 1
+    next
+  end
 
   # input is hex formatted, so the trimmed length is max_ndecoded * 2
   result[:input] = result[:input][0, max_ndecoded * 2]
@@ -18,4 +26,4 @@ STDIN.each_line do |line|
   STDOUT.puts result.to_json
 end
 
-STDERR.puts "[+] pass: minimize-input done"
+STDERR.puts "[+] pass: minimize-input done: #{count} filtered"
