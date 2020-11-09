@@ -6,3 +6,4 @@
 ./src/worker/xed/xed.so
 ./src/worker/zydis/zydis.so
 ./src/worker/bddisasm/bddisasm.so
+./src/worker/iced/iced.so

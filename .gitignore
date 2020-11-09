@@ -2,3 +2,6 @@
 *.so
 src/mishegos/mishegos
 src/worker/worker
+src/mish2jsonl/mish2jsonl
+Cargo.lock
+target/

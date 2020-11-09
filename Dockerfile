@@ -12,7 +12,14 @@ RUN DEBIAN_FRONTEND="noninteractive" apt-get install -y \
         autotools-dev \
         autoconf \
         libtool \
-        git
+        git \
+        curl \
+        llvm-dev \
+        libclang-dev \
+        clang
+
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
 
 WORKDIR /app/mishegos
 COPY ./ .
