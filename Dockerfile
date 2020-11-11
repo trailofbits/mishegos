@@ -25,7 +25,6 @@ WORKDIR /app/mishegos
 COPY ./ .
 
 ARG TARGET=all
-ARG BUILD_JOBS=4
-RUN make "${TARGET}" -j"${BUILD_JOBS}"
+RUN make "${TARGET}" -j
 
 CMD ["/bin/bash"]
