@@ -25,6 +25,7 @@ HEADER = ERB.new <<~HTML
       <style type="text/css">
         table, th, td {
           border: 1px solid black;
+          table-layout: auto;
         }
 
         th, td {
