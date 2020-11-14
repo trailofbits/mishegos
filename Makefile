@@ -1,10 +1,10 @@
 export CFLAGS := \
-	-std=gnu11 -Wall -Werror -pthread \
+	-std=gnu11 -Wall -pthread \
 	-I$(shell pwd)/src/include
 export LDLIBS := -ldl -lrt -lpthread
 export CPPFLAGS :=
 export CXXFLAGS := \
-	-std=c++11 -Wall -Werror -pthread \
+	-std=c++11 -Wall -pthread \
 	-I$(shell pwd)/src/include
 export RUSTFLAGS := -D warnings
 export RUST_BINDGEN_CLANG_ARGS := \
