@@ -1,6 +1,6 @@
 ./src/worker/bfd/bfd.so
 ./src/worker/capstone/capstone.so
-#./src/worker/dynamorio/dynamorio.so
+./src/worker/dynamorio/dynamorio.so
 ./src/worker/fadec/fadec.so
 ./src/worker/udis86/udis86.so
 ./src/worker/xed/xed.so
