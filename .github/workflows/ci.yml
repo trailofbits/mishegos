@@ -50,4 +50,7 @@ jobs:
           gcc-10
 
     - name: Build
+      env:
+        CC: gcc-10
+        CXX: g++-10
       run: make -j$(nproc)
