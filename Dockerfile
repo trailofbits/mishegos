@@ -14,9 +14,7 @@ RUN DEBIAN_FRONTEND="noninteractive" apt-get install -y \
         libtool \
         git \
         curl \
-        llvm-dev \
-        libclang-dev \
-        clang
+        gcc-10
 
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ENV PATH="/root/.cargo/bin:${PATH}"
@@ -25,6 +23,6 @@ WORKDIR /app/mishegos
 COPY ./ .
 
 ARG TARGET=all
-RUN make "${TARGET}" -j
+RUN make "${TARGET}" CC=gcc-10 CXX=g++-10 -j
 
 CMD ["/bin/bash"]
