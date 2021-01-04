@@ -47,6 +47,7 @@ jobs:
           autotools-dev \
           autoconf \
           libtool \
-          kaitai-struct-compiler
+          gcc-10
+
     - name: Build
       run: make -j$(nproc)
