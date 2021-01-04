@@ -20,20 +20,34 @@ jobs:
         run: |
           make fmt && git diff --exit-code
           make lint
-  build:
+
+  docker-build:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+
     - name: Checkout submodules
       run: |
         auth_header="$(git config --local --get http.https://github.com/.extraheader)"
         git submodule sync --recursive
         git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive
+
+    - name: Docker build
+      run: docker build -t mishegos .
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Checkout submodules
+      run: |
+        auth_header="$(git config --local --get http.https://github.com/.extraheader)"
+        git submodule sync --recursive
+        git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive
+
     - name: Install dependencies
       run: |
-        sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com --recv 379CE192D401AB61
-        echo "deb https://dl.bintray.com/kaitai-io/debian jessie main" \
-          | sudo tee /etc/apt/sources.list.d/kaitai.list
         sudo apt-get update
 
         sudo apt-get install -y \
@@ -47,6 +61,10 @@ jobs:
           autotools-dev \
           autoconf \
           libtool \
-          kaitai-struct-compiler
+          gcc-10
+
     - name: Build
+      env:
+        CC: gcc-10
+        CXX: g++-10
       run: make -j$(nproc)

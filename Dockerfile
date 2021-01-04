@@ -14,6 +14,8 @@ RUN DEBIAN_FRONTEND="noninteractive" apt-get install -y \
         libtool \
         git \
         curl \
+        gcc-10 \
+        g++-10 \
         llvm-dev \
         libclang-dev \
         clang
@@ -25,6 +27,6 @@ WORKDIR /app/mishegos
 COPY ./ .
 
 ARG TARGET=all
-RUN make "${TARGET}" -j
+RUN make "${TARGET}" CC=gcc-10 CXX=g++-10 -j
 
 CMD ["/bin/bash"]
