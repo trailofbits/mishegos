@@ -60,11 +60,7 @@ jobs:
           ruby \
           autotools-dev \
           autoconf \
-          libtool \
-          gcc-10
+          libtool
 
     - name: Build
-      env:
-        CC: gcc-10
-        CXX: g++-10
       run: make -j$(nproc)
