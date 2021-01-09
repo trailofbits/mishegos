@@ -237,7 +237,6 @@ static void arena_init() {
        * a slot.
        */
       slot->workers = ~(~0 << nworkers);
-      candidate(slot);
       DLOG("slot=%d new candidate:", i);
       hexputs(slot->raw_insn, slot->len);
     }
