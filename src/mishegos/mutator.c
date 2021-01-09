@@ -237,6 +237,72 @@ static bool sliding_candidate(input_slot *slot) {
   return true;
 }
 
+/* Structured: generate an instruction candidate with the
+ * "structured" approach.
+ */
+static bool structured_candidate(input_slot *slot) {
+  /* We mirror build_sliding_candidate here, but with the constraint that
+   * we never overapproximate: we constrain ourselves to trying
+   * to build something that looks like an instruction of no more
+   * than 15 bytes.
+   */
+
+  uint8_t len = 0;
+
+  /* Up to 4 legacy prefixes. Like sliding, we don't try to enforce group rules.
+   * Unlike sliding, we allow for the possibility of no legacy prefixes.
+   * Running max: 4.
+   */
+  uint8_t prefix_count = (rand_byte() % 5);
+  for (int i = 0; i < prefix_count; ++i) {
+    slot->raw_insn[i] = legacy_prefixes[rand_byte() % sizeof(legacy_prefixes)];
+  }
+  len = prefix_count;
+
+  /* One or none REX prefixes.
+   * Always choose a valid REX prefix if we're inserting one.
+   * Running max: 5.
+   */
+  if (rand_byte() % 2) {
+    slot->raw_insn[len] = rex_prefixes[rand_byte() % sizeof(rex_prefixes)];
+    len++;
+  }
+
+  /* Random (but structured) opcode. Same as sliding.
+   * Running max: 8
+   */
+  opcode opc;
+  rand_opcode(&opc);
+  memcpy(slot->raw_insn + len, opc.op, opc.len);
+  len += opc.len;
+
+  /* One or none ModR/M bytes, and one or none SIB bytes.
+   * Both of these are just 8-bit LUTs, so they can be fully random.
+   * Running max: 10.
+   */
+  if (rand_byte() % 2) {
+    slot->raw_insn[len] = rand_byte();
+    len++;
+  }
+
+  if (rand_byte() % 2) {
+    slot->raw_insn[len] = rand_byte();
+    len++;
+  }
+
+  /* Finally, we have up to 5 bytes to play with for the immediate and
+   * displacement. Fill some amount of that (maybe not all) with randomness.
+   */
+  uint64_t tail = rand_long();
+  uint8_t tail_size = rand_byte() % 6;
+  memcpy(slot->raw_insn + len, &tail, tail_size);
+  len += tail_size;
+
+  slot->len = len;
+
+  return true;
+}
+
 /* Dummy: Generates a single NOP for debugging purposes.
  */
 static bool dummy_candidate(input_slot *slot) {
@@ -285,25 +351,23 @@ void mutator_init() {
  * Returns false if the configured mutation mode has been exhausted.
  */
 bool candidate(input_slot *slot) {
-  bool exhausted;
-
   switch (mut_mode) {
   case M_HAVOC: {
-    exhausted = havoc_candidate(slot);
-    break;
+    return havoc_candidate(slot);
   }
   case M_SLIDING: {
-    exhausted = sliding_candidate(slot);
-    break;
+    return sliding_candidate(slot);
+  }
+  case M_STRUCTURED: {
+    return structured_candidate(slot);
   }
   case M_DUMMY: {
-    exhausted = dummy_candidate(slot);
-    break;
+    return dummy_candidate(slot);
   }
   case M_MANUAL: {
-    exhausted = manual_candidate(slot);
-    break;
+    return manual_candidate(slot);
   }
   }
-  return exhausted;
+
+  __builtin_unreachable();
 }

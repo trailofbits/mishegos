@@ -46,6 +46,8 @@ Run the fuzzer for a bit:
 * `V=1` enables verbose output on `stderr`
 * `D=1` enables the "dummy" mutation mode for debugging purposes
 * `M=1` enables the "manual" mutation mode (i.e., read from `stdin`)
+* `MODE=mode` can be used to configure the mutation mode in the absence of `D` and `M`
+    * Valid mutation modes are `sliding` (default), `havoc`, and `structured`
 
 Convert mishegos's raw output into JSONL suitable for analysis:
 

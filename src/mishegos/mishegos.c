@@ -181,6 +181,25 @@ static void mishegos_sem_init() {
   }
 }
 
+static mutator_mode get_mut_mode() {
+  const char *mode = getenv("MODE");
+
+  /* default to the "sliding" strategy in the mutator. */
+  if (mode == NULL) {
+    return M_SLIDING;
+  }
+
+  if (strcmp(mode, "sliding") == 0) {
+    return M_SLIDING;
+  } else if (strcmp(mode, "havoc") == 0) {
+    return M_HAVOC;
+  } else if (strcmp(mode, "structured") == 0) {
+    return M_STRUCTURED;
+  }
+
+  errx(1, "unknown mutator mode requested: %s", mode);
+}
+
 static void config_init() {
   /* TODO(ww): Configurable RNG seed.
    */
@@ -195,7 +214,10 @@ static void config_init() {
   } else if (debugging) {
     GET_CONFIG()->mut_mode = M_DUMMY;
   } else {
-    GET_CONFIG()->mut_mode = M_SLIDING;
+    /* If we're not in a manual or debugging mode, try to figure out what
+     * actual fuzzing mode the user wants from us.
+     */
+    GET_CONFIG()->mut_mode = get_mut_mode();
   }
 }
 
