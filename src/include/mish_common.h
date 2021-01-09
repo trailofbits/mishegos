@@ -102,6 +102,7 @@ typedef enum {
 typedef enum {
   M_HAVOC = 0,
   M_SLIDING,
+  M_STRUCTURED,
   M_DUMMY,
   M_MANUAL,
 } mutator_mode;

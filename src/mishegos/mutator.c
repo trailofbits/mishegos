@@ -237,6 +237,13 @@ static bool sliding_candidate(input_slot *slot) {
   return true;
 }
 
+/* Structured: generate an instruction candidate with the
+ * "structured" approach.
+ */
+static bool structured_candidate(input_slot *slot) {
+  return true;
+}
+
 /* Dummy: Generates a single NOP for debugging purposes.
  */
 static bool dummy_candidate(input_slot *slot) {
@@ -285,25 +292,23 @@ void mutator_init() {
  * Returns false if the configured mutation mode has been exhausted.
  */
 bool candidate(input_slot *slot) {
-  bool exhausted;
-
   switch (mut_mode) {
   case M_HAVOC: {
-    exhausted = havoc_candidate(slot);
-    break;
+    return havoc_candidate(slot);
   }
   case M_SLIDING: {
-    exhausted = sliding_candidate(slot);
-    break;
+    return sliding_candidate(slot);
+  }
+  case M_STRUCTURED: {
+    return structured_candidate(slot);
   }
   case M_DUMMY: {
-    exhausted = dummy_candidate(slot);
-    break;
+    return dummy_candidate(slot);
   }
   case M_MANUAL: {
-    exhausted = manual_candidate(slot);
-    break;
+    return manual_candidate(slot);
   }
   }
-  return exhausted;
+
+  __builtin_unreachable();
 }
