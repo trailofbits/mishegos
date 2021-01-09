@@ -84,14 +84,13 @@ All numbers below correspond to the following run:
 V=1 timeout 60s ./src/mishegos/mishegos ./workers.spec > /tmp/mishegos
 ```
 
-Within Docker:
+Outside Docker:
 
-* On a Linux server (40 cores, 128GB RAM):
-    * 3.5M outputs/minute
-    * 5 cores pinned
-* On a 2018 Macbook Pro (2+2 cores, 16GB RAM):
-    * 300K outputs/minute
-    * (All) 4 cores pinned
+* On a Linux desktop (Ubuntu 20.04, Ryzen 5 3600, 32GB DDR4):
+    * Commit [`d80063a`](https://github.com/trailofbits/mishegos/commit/d80063a575c4b10d5f787ac88f45d44c8e7f9937)
+    * 8 workers (no `udis86`) + 1 `mishegos` fuzzer process
+    * 8.7M outputs/minute
+    * 9 cores pinned
 
 ## TODO
 
