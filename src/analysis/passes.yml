@@ -1,4 +1,5 @@
 default:
+  - dedupe
   - filter-all-failure
   - filter-ndecoded
   - minimize-input
@@ -15,12 +16,14 @@ same-size-different-decodings:
 
 # Find inputs that not all workers either succeed or fail on.
 status-discrepancies:
+  - dedupe
   - filter-all-failure
   - filter-all-success
   - minimize-input
   - normalize
 
 destroy-capstone:
+  - dedupe
   - filter-all-success
   - filter-ndecoded
   - filter-destroy-capstone
@@ -28,6 +31,7 @@ destroy-capstone:
   - normalize
 
 destroy-bddisasm:
+  - dedupe
   - filter-all-success
   - filter-ndecoded
   - filter-destroy-bddisasm
