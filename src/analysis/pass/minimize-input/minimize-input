@@ -15,6 +15,7 @@ STDIN.each_line do |line|
 
   # If the maximum ndecoded is 0, then all are 0 and we should skip
   # this cohort entirely.
+  # In effect, this is probably identical to filter-all-failure.
   if max_ndecoded.zero?
     count += 1
     next

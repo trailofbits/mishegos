@@ -1,0 +1,26 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# dedupe: filter out any cohorts whose inputs have already appeared at least once.
+
+require "json"
+require "set"
+
+STDERR.puts "[+] pass: dedupe"
+
+count = 0
+seen = Set.new
+STDIN.each_line do |line|
+  result = JSON.parse line, symbolize_names: true
+
+  # add? returns nil if the element is already present, saving us
+  # two separate operations (check + add).
+  if seen.add?(result[:input]).nil?
+    count += 1
+    next
+  end
+
+  STDOUT.puts result.to_json
+end
+
+STDERR.puts "[+] pass: dedupe done: #{count} filtered"
