@@ -34,7 +34,6 @@
 #include <dlfcn.h>
 #include <sys/wait.h>
 #include <setjmp.h>
-#include <sys/random.h>
 #include <time.h>
 
 #define VERBOSE(fmt, ...)                                                                          \
