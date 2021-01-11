@@ -37,3 +37,19 @@ destroy-bddisasm:
   - filter-destroy-bddisasm
   - minimize-input
   - normalize
+
+xed-overaccept:
+  - dedupe
+  - filter-all-success
+  - filter-ndecoded
+  - filter-xed-find-overaccept
+  - minimize-input
+  - normalize
+
+xed-underaccept:
+  - dedupe
+  - filter-all-success
+  - filter-ndecoded
+  - filter-xed-find-underaccept
+  - minimize-input
+  - normalize
