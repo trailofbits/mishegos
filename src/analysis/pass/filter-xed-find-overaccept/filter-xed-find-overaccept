@@ -16,6 +16,16 @@ def success?(decoder)
   decoder[:status][:value] == 1
 end
 
+def failure?(decoder)
+  !success?(decoder)
+end
+
+def failure_by_consensus?(*decoders)
+  nfailures = decoders.select { |d| failure?(d) }.size
+
+  (nfailures / decoders.size.to_f) > 0.50
+end
+
 STDERR.puts "[+] pass: filter-xed-find-overaccept"
 
 count = 0
@@ -28,8 +38,7 @@ STDIN.each_line do |line|
   iced = result[:outputs].find { |o| o[:worker_so] == ICED_SO }
 
   # If XED reports success when other high-quality decoders don't, keep it.
-  # TODO(ww): This should use consensus (2/3) instead of any of them disagreeing with XED.
-  if success?(xed) && (!success?(bddisasm) || !success?(zydis) || !success?(iced))
+  if success?(xed) && failure_by_consensus?(bddisasm, zydis, iced)
     STDOUT.puts result.to_json
   end
 
