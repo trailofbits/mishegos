@@ -107,9 +107,16 @@ static const char *bddisasm_strerror(NDSTATUS ndstatus) {
   }
 }
 
-void worker_ctor() {
-  /* Nothing to do here
-   */
+/* NOTE(ww): AFAICT, there's no easy way to flag these off in bddissasm. */
+static inline decode_status via_or_cyrix_weirdness(const INSTRUX *instr) {
+  switch (instr->Instruction) {
+  case ND_INS_ALTINST:
+  case ND_INS_CPU_READ:
+  case ND_INS_CPU_WRITE:
+    return S_UNKNOWN; /* feels more appropriate than S_FAILURE */
+  default:
+    return S_SUCCESS;
+  }
 }
 
 void try_decode(decode_result *result, uint8_t *raw_insn, uint8_t length) {
@@ -132,7 +139,10 @@ void try_decode(decode_result *result, uint8_t *raw_insn, uint8_t length) {
     return;
   }
 
-  result->status = S_SUCCESS;
+  /* Preserve the successful decoding, but mark it as a failure if it's something
+   * from a weird x86 vendor (like Cyrix or VIA).
+   */
+  result->status = via_or_cyrix_weirdness(&instruction);
   result->len = strlen(result->result);
   result->ndecoded = instruction.Length;
 }
