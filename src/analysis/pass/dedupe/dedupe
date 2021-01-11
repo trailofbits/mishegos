@@ -6,11 +6,11 @@
 require "json"
 require "set"
 
-STDERR.puts "[+] pass: dedupe"
+warn "[+] pass: dedupe"
 
 count = 0
 seen = Set.new
-STDIN.each_line do |line|
+$stdin.each_line do |line|
   result = JSON.parse line, symbolize_names: true
 
   # add? returns nil if the element is already present, saving us
@@ -20,7 +20,7 @@ STDIN.each_line do |line|
     next
   end
 
-  STDOUT.puts result.to_json
+  $stdout.puts result.to_json
 end
 
-STDERR.puts "[+] pass: dedupe done: #{count} filtered"
+warn "[+] pass: dedupe done: #{count} filtered"

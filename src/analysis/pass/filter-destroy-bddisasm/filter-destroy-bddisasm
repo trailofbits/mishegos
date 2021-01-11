@@ -10,10 +10,10 @@ BDDISASM_SO = "./src/worker/bddisasm/bddisasm.so"
 XED_SO = "./src/worker/xed/xed.so"
 ZYDIS_SO = "./src/worker/zydis/zydis.so"
 
-STDERR.puts "[+] pass: filter-destroy-bddisasm"
+warn "[+] pass: filter-destroy-bddisasm"
 
 count = 0
-STDIN.each_line do |line|
+$stdin.each_line do |line|
   result = JSON.parse line, symbolize_names: true
 
   bddisasm = result[:outputs].find { |o| o[:worker_so] == BDDISASM_SO }
@@ -25,7 +25,7 @@ STDIN.each_line do |line|
     next
   end
 
-  STDOUT.puts result.to_json
+  $stdout.puts result.to_json
 end
 
-STDERR.puts "[+] pass: filter-destroy-bddisasm done: #{count} filtered"
+warn "[+] pass: filter-destroy-bddisasm done: #{count} filtered"

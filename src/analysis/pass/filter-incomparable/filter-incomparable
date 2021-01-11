@@ -1,0 +1,29 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# filter-incomparable: remove any cohorts whose results can't be compared,
+# i.e. any cohorts that have fewer than two successful results
+
+require "json"
+
+warn "[+] pass: filter-incomparable"
+
+def success?(decoder)
+  decoder[:status][:value] == 1
+end
+
+count = 0
+$stdin.each_line do |line|
+  result = JSON.parse line, symbolize_names: true
+
+  outputs = result[:outputs]
+  successes = outputs.count { |o| success?(o) }
+  if successes < 2
+    count += 1
+    next
+  end
+
+  $stdout.puts result.to_json
+end
+
+warn "[+] pass: filter-incomparable done: #{count} filtered"

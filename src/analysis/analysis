@@ -12,7 +12,7 @@ require "open3"
 require "optparse"
 
 def hai(msg)
-  STDERR.puts "[analysis] #{msg}" if VERBOSE
+  warn "[analysis] #{msg}" if VERBOSE
 end
 
 def load_pass!(dir)
@@ -98,7 +98,7 @@ module PassOperations
     hai "running passes: #{map(&:name)}"
 
     cmds = map(&:cmd).map(&:to_s)
-    Open3.pipeline(*cmds, in: STDIN, out: STDOUT)
+    Open3.pipeline(*cmds, in: $stdin, out: $stdout)
 
     self
   end
@@ -110,6 +110,7 @@ PASS_FILE = Pathname.new File.expand_path("passes.yml", __dir__)
 
 opts = {
   profile: "default",
+  describe: false,
 }
 
 OptionParser.new do |o|
@@ -118,9 +119,13 @@ OptionParser.new do |o|
   o.on "-p", "--profile PROFILE", String, "Use the given analysis profile" do |profile|
     opts[:profile] = profile
   end
+
+  o.on "-d", "--describe", "Describe each step of the given profile instead of running" do
+    opts[:describe] = true
+  end
 end.parse!
 
-STDERR.sync = true
+$stderr.sync = true
 
 hai "pass directory: #{PASS_DIR}"
 hai "pass spec file: #{PASS_FILE}"
@@ -136,5 +141,10 @@ end.to_set
 
 passes.select! { |p| profile.include?(p.name) }
 
-passes.extend PassOperations
-passes.verify!.order!.run!
+if opts[:describe]
+  puts opts[:profile]
+  passes.each { |pass| puts "\t#{pass.name}: #{pass.desc}" }
+else
+  passes.extend PassOperations
+  passes.verify!.order!.run!
+end

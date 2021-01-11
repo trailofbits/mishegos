@@ -5,10 +5,10 @@
 
 require "json"
 
-STDERR.puts "[+] pass: minimize-input"
+warn "[+] pass: minimize-input"
 
 count = 0
-STDIN.each_line do |line|
+$stdin.each_line do |line|
   result = JSON.parse line, symbolize_names: true
 
   max_ndecoded = result[:outputs].map { |o| o[:ndecoded] }.max
@@ -24,7 +24,7 @@ STDIN.each_line do |line|
   # input is hex formatted, so the trimmed length is max_ndecoded * 2
   result[:input] = result[:input][0, max_ndecoded * 2]
 
-  STDOUT.puts result.to_json
+  $stdout.puts result.to_json
 end
 
-STDERR.puts "[+] pass: minimize-input done: #{count} filtered"
+warn "[+] pass: minimize-input done: #{count} filtered"
