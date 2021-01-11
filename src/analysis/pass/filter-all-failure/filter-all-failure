@@ -5,10 +5,10 @@
 
 require "json"
 
-STDERR.puts "[+] pass: filter-all-failure"
+warn "[+] pass: filter-all-failure"
 
 count = 0
-STDIN.each_line do |line|
+$stdin.each_line do |line|
   result = JSON.parse line, symbolize_names: true
 
   if result[:outputs].all? { |o| o[:status][:name] == "failure" }
@@ -16,7 +16,7 @@ STDIN.each_line do |line|
     next
   end
 
-  STDOUT.puts result.to_json
+  $stdout.puts result.to_json
 end
 
-STDERR.puts "[+] pass: filter-all-failure done: #{count} filtered"
+warn "[+] pass: filter-all-failure done: #{count} filtered"
