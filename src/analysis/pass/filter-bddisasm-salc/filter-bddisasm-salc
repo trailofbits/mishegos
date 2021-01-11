@@ -9,10 +9,10 @@ require "json"
 # TODO(ww): Remove this.
 BDDISASM_SO = "./src/worker/bddisasm/bddisasm.so"
 
-STDERR.puts "[+] pass: filter-bddisasm-salc"
+warn "[+] pass: filter-bddisasm-salc"
 
 count = 0
-STDIN.each_line do |line|
+$stdin.each_line do |line|
   result = JSON.parse line, symbolize_names: true
 
   bddisasm = result[:outputs].find { |o| o[:worker_so] == BDDISASM_SO }
@@ -22,7 +22,7 @@ STDIN.each_line do |line|
     next
   end
 
-  STDOUT.puts result.to_json
+  $stdout.puts result.to_json
 end
 
-STDERR.puts "[+] pass: filter-bddisasm-salc done: #{count} filtered"
+warn "[+] pass: filter-bddisasm-salc done: #{count} filtered"

@@ -26,10 +26,10 @@ def success_by_consensus?(*decoders)
   (nsuccesses / decoders.size.to_f) > 0.50
 end
 
-STDERR.puts "[+] pass: filter-xed-find-underaccept"
+warn "[+] pass: filter-xed-find-underaccept"
 
 count = 0
-STDIN.each_line do |line|
+$stdin.each_line do |line|
   result = JSON.parse line, symbolize_names: true
 
   bddisasm = result[:outputs].find { |o| o[:worker_so] == BDDISASM_SO }
@@ -38,11 +38,9 @@ STDIN.each_line do |line|
   iced = result[:outputs].find { |o| o[:worker_so] == ICED_SO }
 
   # If XED reports failure when other high-quality decoders don't, keep it.
-  if failure?(xed) && success_by_consensus?(bddisasm, zydis, iced)
-    STDOUT.puts result.to_json
-  end
+  $stdout.puts result.to_json if failure?(xed) && success_by_consensus?(bddisasm, zydis, iced)
 
   count += 1
 end
 
-STDERR.puts "[+] pass: filter-xed-find-underaccept done: #{count} filtered"
+warn "[+] pass: filter-xed-find-underaccept done: #{count} filtered"

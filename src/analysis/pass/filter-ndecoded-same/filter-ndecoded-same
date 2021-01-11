@@ -11,10 +11,10 @@
 
 require "json"
 
-STDERR.puts "[+] pass: filter-ndecoded-same"
+warn "[+] pass: filter-ndecoded-same"
 
 count = 0
-STDIN.each_line do |line|
+$stdin.each_line do |line|
   result = JSON.parse line, symbolize_names: true
 
   outputs = result[:outputs]
@@ -23,7 +23,7 @@ STDIN.each_line do |line|
     next
   end
 
-  STDOUT.puts result.to_json
+  $stdout.puts result.to_json
 end
 
-STDERR.puts "[+] pass: filter-ndecoded-same done: #{count} filtered"
+warn "[+] pass: filter-ndecoded-same done: #{count} filtered"

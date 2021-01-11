@@ -5,9 +5,9 @@
 
 require "json"
 
-STDERR.puts "[+] pass: normalize"
+warn "[+] pass: normalize"
 
-STDIN.each_line do |line|
+$stdin.each_line do |line|
   result = JSON.parse line, symbolize_names: true
 
   result[:outputs].map! do |output|
@@ -22,7 +22,7 @@ STDIN.each_line do |line|
     output
   end
 
-  STDOUT.puts result.to_json
+  $stdout.puts result.to_json
 end
 
-STDERR.puts "[+] pass: normalize done"
+warn "[+] pass: normalize done"

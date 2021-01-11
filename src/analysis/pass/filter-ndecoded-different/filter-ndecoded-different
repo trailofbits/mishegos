@@ -11,10 +11,10 @@
 
 require "json"
 
-STDERR.puts "[+] pass: filter-ndecoded-different"
+warn "[+] pass: filter-ndecoded-different"
 
 count = 0
-STDIN.each_line do |line|
+$stdin.each_line do |line|
   result = JSON.parse line, symbolize_names: true
 
   outputs_ndecoded = result[:outputs].map { |o| o[:ndecoded] }
@@ -23,7 +23,7 @@ STDIN.each_line do |line|
     next
   end
 
-  STDOUT.puts result.to_json
+  $stdout.puts result.to_json
 end
 
-STDERR.puts "[+] pass: filter-ndecoded-different done: #{count} filtered"
+warn "[+] pass: filter-ndecoded-different done: #{count} filtered"
