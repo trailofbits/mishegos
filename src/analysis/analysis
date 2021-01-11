@@ -110,6 +110,7 @@ PASS_FILE = Pathname.new File.expand_path("passes.yml", __dir__)
 
 opts = {
   profile: "default",
+  describe: false,
 }
 
 OptionParser.new do |o|
@@ -117,6 +118,10 @@ OptionParser.new do |o|
 
   o.on "-p", "--profile PROFILE", String, "Use the given analysis profile" do |profile|
     opts[:profile] = profile
+  end
+
+  o.on "-d", "--describe", "Describe each step of the given profile instead of running" do
+    opts[:describe] = true
   end
 end.parse!
 
@@ -136,5 +141,10 @@ end.to_set
 
 passes.select! { |p| profile.include?(p.name) }
 
-passes.extend PassOperations
-passes.verify!.order!.run!
+if opts[:describe]
+  puts opts[:profile]
+  passes.each { |pass| puts "\t#{pass.name}: #{pass.desc}" }
+else
+  passes.extend PassOperations
+  passes.verify!.order!.run!
+end
