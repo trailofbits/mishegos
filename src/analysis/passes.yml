@@ -15,11 +15,13 @@ same-size-different-decodings:
   - normalize
 
 # Finds disagreements in size between workers.
+size-discrepancies:
   - dedupe
   - filter-all-failure
   - filter-ndecoded-same
   - minimize-input
   - normalize
+
 # Find inputs that not all workers either succeed or fail on.
 status-discrepancies:
   - dedupe
