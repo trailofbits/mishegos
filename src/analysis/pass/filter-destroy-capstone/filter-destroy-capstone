@@ -10,10 +10,10 @@ CAPSTONE_SO = "./src/worker/capstone/capstone.so"
 XED_SO = "./src/worker/xed/xed.so"
 ZYDIS_SO = "./src/worker/zydis/zydis.so"
 
-STDERR.puts "[+] pass: filter-destroy-capstone"
+warn "[+] pass: filter-destroy-capstone"
 
 count = 0
-STDIN.each_line do |line|
+$stdin.each_line do |line|
   result = JSON.parse line, symbolize_names: true
 
   capstone = result[:outputs].find { |o| o[:worker_so] == CAPSTONE_SO }
@@ -25,7 +25,7 @@ STDIN.each_line do |line|
     next
   end
 
-  STDOUT.puts result.to_json
+  $stdout.puts result.to_json
 end
 
-STDERR.puts "[+] pass: filter-destroy-capstone done: #{count} filtered"
+warn "[+] pass: filter-destroy-capstone done: #{count} filtered"
