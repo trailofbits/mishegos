@@ -1,0 +1,3 @@
+name: filter-bddisasm-salc
+desc: Find bddisasm results that decode to SALC
+run: filter-bddisasm-salc

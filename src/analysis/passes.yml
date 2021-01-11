@@ -50,6 +50,7 @@ xed-underaccept:
   - dedupe
   - filter-all-success
   - filter-ndecoded
+  - filter-bddisasm-salc
   - filter-xed-find-underaccept
   - minimize-input
   - normalize
