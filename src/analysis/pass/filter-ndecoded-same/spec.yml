@@ -1,3 +1,3 @@
-name: filter-ndecoded
+name: filter-ndecoded-same
 desc: Filter out any cohorts where all outputs consumed exactly the same number of input bytes
-run: filter-ndecoded
+run: filter-ndecoded-same

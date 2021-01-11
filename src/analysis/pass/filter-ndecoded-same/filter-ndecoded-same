@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# filter-ndecoded: remove any cohorts where all outputs consumed
+# filter-ndecoded-same: remove any cohorts where all outputs consumed
 # exactly the same number of input bytes.
 #
 # NOTE: Observe that "decoded the same number of bytes" is *not* the same
@@ -11,7 +11,7 @@
 
 require "json"
 
-STDERR.puts "[+] pass: filter-ndecoded"
+STDERR.puts "[+] pass: filter-ndecoded-same"
 
 count = 0
 STDIN.each_line do |line|
@@ -26,4 +26,4 @@ STDIN.each_line do |line|
   STDOUT.puts result.to_json
 end
 
-STDERR.puts "[+] pass: filter-ndecoded done: #{count} filtered"
+STDERR.puts "[+] pass: filter-ndecoded-same done: #{count} filtered"
