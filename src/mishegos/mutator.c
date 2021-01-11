@@ -82,13 +82,13 @@ static inline uint8_t rand_byte() {
 #else
 static uint64_t rand_long() {
   uint64_t it;
-  getrandom(&it, sizeof(it), 0);
+  mish_getrandom(&it, sizeof(it), 0);
   return it;
 }
 
 static uint8_t rand_byte() {
   uint8_t it;
-  getrandom(&it, sizeof(it), 0);
+  mish_getrandom(&it, sizeof(it), 0);
   return it;
 }
 #endif

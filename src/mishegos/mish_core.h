@@ -6,6 +6,11 @@
 
 extern uint8_t *mishegos_arena;
 
+/* A wrapper around either glibc's getrandom or syscall(...),
+ * if the host doesn't have a new enough glibc.
+ */
+int mish_getrandom(void *buf, size_t buflen, unsigned int flags);
+
 const char *get_worker_so(uint32_t workerno);
 
 /* Returns a hex-string representation of the given input slot.
