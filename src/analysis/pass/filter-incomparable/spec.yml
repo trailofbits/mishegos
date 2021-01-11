@@ -1,0 +1,3 @@
+name: filter-incomparable
+desc: Find out cohorts whose results can't be compared (i.e., that have less than two successes)
+run: filter-incomparable

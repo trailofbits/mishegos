@@ -1,0 +1,29 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# find-size-discrepancies: find cohorts whose successful results differ in decoded size.
+
+require "json"
+
+warn "[+] pass: find-size-discrepancies"
+
+def success?(decoder)
+  decoder[:status][:value] == 1
+end
+
+count = 0
+$stdin.each_line do |line|
+  result = JSON.parse line, symbolize_names: true
+
+  outputs = result[:outputs]
+  successes = outputs.select { |o| success? o }
+
+  if successes.map { |o| o[:ndecoded] }.uniq.size == 1
+    count += 1
+    next
+  end
+
+  $stdout.puts result.to_json
+end
+
+warn "[+] pass: find-size-discrepancies done: #{count} filtered"

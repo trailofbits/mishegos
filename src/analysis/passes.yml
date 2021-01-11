@@ -19,6 +19,8 @@ size-discrepancies:
   - dedupe
   - filter-all-failure
   - filter-ndecoded-same
+  - filter-incomparable
+  - find-size-discrepancies
   - minimize-input
   - normalize
 
