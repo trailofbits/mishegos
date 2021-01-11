@@ -203,7 +203,7 @@ static mutator_mode get_mut_mode() {
 static void config_init() {
   /* TODO(ww): Configurable RNG seed.
    */
-  getrandom(GET_CONFIG()->rng_seed, sizeof(GET_CONFIG()->rng_seed), 0);
+  mish_getrandom(GET_CONFIG()->rng_seed, sizeof(GET_CONFIG()->rng_seed), 0);
 
   if (getenv("FAST_AND_FURIOUS") != NULL) {
     GET_CONFIG()->worker_config |= 1 << W_IGNORE_CRASHES;
