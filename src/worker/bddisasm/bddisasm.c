@@ -110,12 +110,12 @@ static const char *bddisasm_strerror(NDSTATUS ndstatus) {
 /* NOTE(ww): AFAICT, there's no easy way to flag these off in bddissasm. */
 static inline decode_status via_or_cyrix_weirdness(const INSTRUX *instr) {
   switch (instr->Instruction) {
-    case ND_INS_ALTINST:
-    case ND_INS_CPU_READ:
-    case ND_INS_CPU_WRITE:
-      return S_UNKNOWN; /* feels more appropriate than S_FAILURE */
-    default:
-      return S_SUCCESS;
+  case ND_INS_ALTINST:
+  case ND_INS_CPU_READ:
+  case ND_INS_CPU_WRITE:
+    return S_UNKNOWN; /* feels more appropriate than S_FAILURE */
+  default:
+    return S_SUCCESS;
   }
 }
 
