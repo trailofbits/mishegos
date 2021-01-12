@@ -1,7 +1,7 @@
 default:
-  - dedupe
   - filter-all-failure
   - filter-ndecoded-same
+  - dedupe
   - minimize-input
   - normalize
 
@@ -20,50 +20,50 @@ same-size-different-decodings:
 
 # Finds disagreements in size between workers.
 size-discrepancies:
-  - dedupe
   - filter-all-failure
   - filter-ndecoded-same
   - filter-incomparable
+  - dedupe
   - find-size-discrepancies
   - minimize-input
   - normalize
 
 # Find inputs that not all workers either succeed or fail on.
 status-discrepancies:
-  - dedupe
   - filter-all-failure
   - filter-all-success
+  - dedupe
   - minimize-input
   - normalize
 
 destroy-capstone:
-  - dedupe
   - filter-all-success
   - filter-ndecoded-same
+  - dedupe
   - filter-destroy-capstone
   - minimize-input
   - normalize
 
 destroy-bddisasm:
-  - dedupe
   - filter-all-success
   - filter-ndecoded-same
+  - dedupe
   - filter-destroy-bddisasm
   - minimize-input
   - normalize
 
 xed-overaccept:
-  - dedupe
   - filter-all-success
   - filter-ndecoded-same
+  - dedupe
   - filter-xed-find-overaccept
   - minimize-input
   - normalize
 
 xed-underaccept:
-  - dedupe
   - filter-all-success
   - filter-ndecoded-same
+  - dedupe
   - filter-bddisasm-salc
   - filter-xed-find-underaccept
   - minimize-input
