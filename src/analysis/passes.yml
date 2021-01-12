@@ -5,6 +5,10 @@ default:
   - minimize-input
   - normalize
 
+# Run just the dedupe pass, as a convenient filter.
+dedupe:
+  - dedupe
+
 # Find inputs that all workers agree are one size, but one or more
 # decodes differently.
 same-size-different-decodings:
