@@ -40,10 +40,7 @@ pub unsafe extern "C" fn try_decode(result: *mut decode_result, raw_insn: *const
 }
 
 fn try_decode_safe(bitness: u32, ip: u64, data: &[u8]) -> Result<(usize, String), u32> {
-    // Don't enable old instructions not supported by current CPUs
-    // Don't enable deprecated MPX instructions
-    // Don't enable LOCK MOV CR (only supported by some AMD CPUs)
-    const DECODER_OPTIONS: u32 = DecoderOptions::NO_LOCK_MOV_CR;
+    const DECODER_OPTIONS: u32 = DecoderOptions::NONE;
 
     let mut decoder = Decoder::new(bitness, data, DECODER_OPTIONS);
     decoder.set_ip(ip);
