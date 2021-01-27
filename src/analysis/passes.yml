@@ -68,3 +68,16 @@ xed-underaccept:
   - filter-xed-find-underaccept
   - minimize-input
   - normalize
+
+# Find relatively small (<= 8 byte) inputs.
+# This should be run after an analysis that does `minimize-input`
+small-inputs:
+  - find-small-inputs
+
+# Remove all libopcodes results.
+remove-libopcodes:
+  - prune-libopcodes
+
+# Remove all capstone results.
+remove-capstone:
+  - prune-capstone

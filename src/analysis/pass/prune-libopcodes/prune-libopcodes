@@ -1,0 +1,20 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# prune-libopcodes: remove libopcodes results from each cohort, if present
+
+require "json"
+
+# TODO(ww): Remove this.
+LIBOPCODES_SO = "./src/worker/bfd/bfd.so"
+
+warn "[+] pass: prune-libopcodes"
+
+$stdin.each_line do |line|
+  result = JSON.parse line, symbolize_names: true
+  result[:outputs].reject! { |o| o[:worker_so] == LIBOPCODES_SO }
+
+  $stdout.puts result.to_json
+end
+
+warn "[+] pass: prune-libopcodes done"
