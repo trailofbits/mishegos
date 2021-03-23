@@ -6,7 +6,8 @@ WORKERS = bfd \
 	xed \
 	zydis \
 	bddisasm \
-	iced
+	iced \
+	yaxpeax-x86
 
 .PHONY: all
 all: worker $(WORKERS)
