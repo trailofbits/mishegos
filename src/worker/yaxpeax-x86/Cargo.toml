@@ -1,0 +1,19 @@
+[package]
+name = "yaxpeax-x86-mishegos"
+version = "0.1.0"
+authors = ["iximeow <git@iximeow.net>"]
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+yaxpeax-x86 = { version = "0.2.0" }
+yaxpeax-arch = "0.0.4"
+
+[build-dependencies]
+bindgen = "*"
+
+[profile.release]
+lto = true
+opt-level = 3
