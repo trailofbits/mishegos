@@ -6,7 +6,8 @@ export CPPFLAGS :=
 export CXXFLAGS := \
 	-std=c++11 -Wall -pthread \
 	-I$(shell pwd)/src/include
-export RUSTFLAGS := -D warnings
+# TODO(ww): https://github.com/rust-lang/rust-bindgen/issues/1651
+# export RUSTFLAGS := -D warnings
 export RUST_BINDGEN_CLANG_ARGS := \
 	-I$(shell pwd)/src/include
 
