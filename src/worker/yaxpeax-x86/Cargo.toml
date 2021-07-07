@@ -8,8 +8,8 @@ edition = "2018"
 crate-type = ["cdylib"]
 
 [dependencies]
-yaxpeax-x86 = { version = "0.2.0" }
-yaxpeax-arch = "0.0.5"
+yaxpeax-x86 = { version = "1.0.0" }
+yaxpeax-arch = { version = "0.2.0" }
 
 [build-dependencies]
 bindgen = "*"
