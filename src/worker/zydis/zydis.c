@@ -51,7 +51,7 @@ static const char *ZyanStatus_strerror(ZyanStatus zstatus) {
 }
 
 void worker_ctor() {
-  ZydisDecoderInit(&zdecoder, ZYDIS_MACHINE_MODE_LONG_64, ZYDIS_ADDRESS_WIDTH_64);
+  ZydisDecoderInit(&zdecoder, ZYDIS_MACHINE_MODE_LONG_64, ZYDIS_STACK_WIDTH_64);
   ZydisFormatterInit(&zformatter, ZYDIS_FORMATTER_STYLE_INTEL);
 
   /* TODO(ww): Zydis has a bunch of formatter options; we probably
