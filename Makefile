@@ -23,10 +23,13 @@ ALL_SRCS := $(shell \
 		-path '*/xed/xed/*' -o \
 		-path '*/xed/mbuild/*' -o \
 		-path '*/zydis/zydis/*' -o \
-		-path '*/bddisasm/bddisasm/*' \
+		-path '*/bddisasm/bddisasm/*' -o \
+		-path '*/ghidra/ghidra/*' -o \
+		-path '*/ghidra/build/*' -o \
+		-path '*/ghidra/sleigh-cmake/*' \
 	\) \
 	-prune \
-	-o \( -name '*.c' -o -name '*.h' \) -print \
+	-o \( -name '*.c' -o -name '*.cc' -o -name '*.h' \) -print \
 )
 
 .PHONY: all

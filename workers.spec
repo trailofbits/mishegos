@@ -8,3 +8,4 @@
 ./src/worker/bddisasm/bddisasm.so
 ./src/worker/iced/iced.so
 ./src/worker/yaxpeax-x86/libyaxpeax_x86_mishegos.so
+./src/worker/ghidra/ghidra.so
