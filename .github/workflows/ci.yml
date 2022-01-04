@@ -37,11 +37,12 @@ jobs:
 
     - name: Docker Smoketest
       run: |
-        docker run --rm mishegos bash -c 'M=1 ./src/mishegos/mishegos ./workers.spec <<< "90"'
+        docker run --rm mishegos bash -eo pipefail -c 'M=1 ./src/mishegos/mishegos ./workers.spec <<< "90" | ./src/mish2jsonl/mish2jsonl'
 
     - name: Docker Test Fuzz
       run: |
-        docker run --rm mishegos bash -c '(V=1 timeout --preserve-status 60s ./src/mishegos/mishegos ./workers.spec > /tmp/mishegos 2> /tmp/mishegos.err || (tail -n 50 /tmp/mishegos.err && false)) && tail -n 50 /tmp/mishegos.err'
+        docker run --rm mishegos bash -eo pipefail -c \
+          'timeout --preserve-status 5s ./src/mishegos/mishegos ./workers.spec | ./src/mish2jsonl/mish2jsonl | tail'
 
   build:
     runs-on: ubuntu-latest
@@ -75,9 +76,11 @@ jobs:
 
     - name: Smoketest
       # Disassemble NOP
-      run: M=1 ./src/mishegos/mishegos ./workers.spec <<< "90"
+      run: |
+        set -eo pipefail
+        M=1 ./src/mishegos/mishegos ./workers.spec <<< "90" | ./src/mish2jsonl/mish2jsonl
 
     - name: Test Fuzz
       run: |
-        # Always tail stderr
-        (V=1 timeout --preserve-status 60s ./src/mishegos/mishegos ./workers.spec > /tmp/mishegos 2> /tmp/mishegos.err || (tail -n 50 /tmp/mishegos.err && false)) && tail -n 50 /tmp/mishegos.err
+        set -eo pipefail
+        timeout --preserve-status 5s ./src/mishegos/mishegos ./workers.spec | ./src/mish2jsonl/mish2jsonl | tail
