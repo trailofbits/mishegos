@@ -64,3 +64,12 @@ jobs:
 
     - name: Build
       run: make -j$(nproc)
+
+    - name: Smoketest
+      # Disassemble NOP
+      run: M=1 ./src/mishegos/mishegos ./workers.spec <<< "90"
+
+    - name: Test Fuzz
+      run: |
+        # Always tail stderr
+        (V=1 timeout --preserve-status 5s ./src/mishegos/mishegos ./workers.spec > /tmp/mishegos 2> /tmp/mishegos.err || (tail -n 20 /tmp/mishegos.err && false)) && tail -n 20 /tmp/mishegos.err
