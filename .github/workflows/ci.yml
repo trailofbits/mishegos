@@ -41,7 +41,7 @@ jobs:
 
     - name: Docker Test Fuzz
       run: |
-        docker run --rm mishegos bash -c '(V=1 timeout --preserve-status 5s ./src/mishegos/mishegos ./workers.spec > /tmp/mishegos 2> /tmp/mishegos.err || (tail -n 20 /tmp/mishegos.err && false)) && tail -n 20 /tmp/mishegos.err'
+        docker run --rm mishegos bash -c '(V=1 timeout --preserve-status 5s ./src/mishegos/mishegos ./workers.spec > /tmp/mishegos 2> /tmp/mishegos.err || (tail -n 50 /tmp/mishegos.err && false)) && tail -n 50 /tmp/mishegos.err'
 
   build:
     runs-on: ubuntu-latest
@@ -80,4 +80,4 @@ jobs:
     - name: Test Fuzz
       run: |
         # Always tail stderr
-        (V=1 timeout --preserve-status 5s ./src/mishegos/mishegos ./workers.spec > /tmp/mishegos 2> /tmp/mishegos.err || (tail -n 20 /tmp/mishegos.err && false)) && tail -n 20 /tmp/mishegos.err
+        (V=1 timeout --preserve-status 5s ./src/mishegos/mishegos ./workers.spec > /tmp/mishegos 2> /tmp/mishegos.err || (tail -n 50 /tmp/mishegos.err && false)) && tail -n 50 /tmp/mishegos.err
