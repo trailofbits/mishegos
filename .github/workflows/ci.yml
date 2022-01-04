@@ -35,6 +35,14 @@ jobs:
     - name: Docker build
       run: docker build -t mishegos .
 
+    - name: Docker Smoketest
+      run: |
+        docker run --rm mishegos bash -c 'M=1 ./src/mishegos/mishegos ./workers.spec <<< "90"'
+
+    - name: Docker Test Fuzz
+      run: |
+        docker run --rm mishegos bash -c '(V=1 timeout --preserve-status 5s ./src/mishegos/mishegos ./workers.spec > /tmp/mishegos 2> /tmp/mishegos.err || (tail -n 20 /tmp/mishegos.err && false)) && tail -n 20 /tmp/mishegos.err'
+
   build:
     runs-on: ubuntu-latest
     steps:
