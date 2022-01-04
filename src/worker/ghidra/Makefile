@@ -14,4 +14,4 @@ ghidra.so:
 .PHONY: clean
 clean:
 	rm -rf build
-	rm ./ghidra.so
+	rm -f ./ghidra.so
