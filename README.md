@@ -7,6 +7,21 @@ A differential fuzzer for x86 decoders.
 
 ![mishegos](https://user-images.githubusercontent.com/3059210/59005797-da89b400-87ec-11e9-8274-321edfa6df45.png)
 
+Read more about mishegos in its accompanying [blog post](https://blog.trailofbits.com/2019/10/31/destroying-x86_64-instruction-decoders-with-differential-fuzzing/)
+and academic publication ([paper](https://github.com/gangtan/LangSec-papers-and-slides/raw/main/langsec21/papers/Woodruff_LangSec21.pdf) 
+| [recording](https://www.youtube.com/watch?v=a2q86KTZt0g) 
+| [slides](https://github.com/trailofbits/publications/blob/master/presentations/Differential%20analysis%20of%20x86-64%20decoders/langsec-2021-slides.pdf)).
+
+```bibtex
+@InProceedings{woodruff21differential,
+  author       = "William Woodruff and Niki Carroll and Sebastiaan Peters",
+  title        = "Differential analysis of x86-64 instruction decoders",
+  booktitle    = "Proceedings of the Seventh Language-Theoretic Security Workshop~({LangSec}) at the {IEEE} Symposium on Security and Privacy",
+  year         = "2021",
+  month        = "May"
+}
+```
+
 ## Usage
 
 Start with a clone, including submodules:
