@@ -20,7 +20,7 @@ get_filename_component(mishegos_include_dir "../../include"
   ABSOLUTE BASE_DIR ${PROJECT_SOURCE_DIRECTORY}
 )
 target_include_directories(mishegos_ghidra
-  PRIVATE $<BUILD_INTERFACE:${mishegos_include_dir}>
+  PRIVATE "$<BUILD_INTERFACE:${mishegos_include_dir}>"
 )
 
 add_dependencies(mishegos_ghidra
