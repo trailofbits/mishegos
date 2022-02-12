@@ -4,17 +4,6 @@
 
 char *worker_name = "bddisasm";
 
-/* This is used by NdToText. */
-int nd_vsnprintf_s(char *buffer, size_t sizeOfBuffer, size_t count, const char *format,
-                   va_list argptr) {
-  return vsnprintf(buffer, sizeOfBuffer, format, argptr);
-}
-
-/* This is used by NdDecode. */
-void *nd_memset(void *s, int c, size_t n) {
-  return memset(s, c, n);
-}
-
 static const char *bddisasm_strerror(NDSTATUS ndstatus) {
   switch (ndstatus) {
   case ND_STATUS_BUFFER_TOO_SMALL: {
