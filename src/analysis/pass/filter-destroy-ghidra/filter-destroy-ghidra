@@ -5,9 +5,9 @@
 
 require "json"
 
-# TODO(ww): Remove this.
 XED_SO = "./src/worker/xed/xed.so"
 ZYDIS_SO = "./src/worker/zydis/zydis.so"
+ICED_SO = "./src/worker/iced/iced.so"
 GHIDRA_SO = "./src/worker/ghidra/ghidra.so"
 
 warn "[+] pass: filter-destroy-ghidra"
@@ -18,9 +18,12 @@ $stdin.each_line do |line|
 
   xed = result[:outputs].find { |o| o[:worker_so] == XED_SO }
   zydis = result[:outputs].find { |o| o[:worker_so] == ZYDIS_SO }
+  iced = result[:outputs].find { |o| o[:worker_so] == ICED_SO }
   ghidra = result[:outputs].find { |o| o[:worker_so] == GHIDRA_SO }
 
-  if ghidra[:status][:value] == xed[:status][:value] && ghidra[:status][:value] == zydis[:status][:value]
+  if ghidra[:status][:value] == xed[:status][:value] &&
+      ghidra[:status][:value] == zydis[:status][:value] &&
+      ghidra[:status][:value] == iced[:status][:value]
     count += 1
     next
   end
