@@ -30,6 +30,12 @@ HEADER = ERB.new <<~HTML
         th, td {
           text-align: left;
         }
+
+        th {
+          position: sticky;
+          top: 0;
+          background: white;
+        }
       </style>
     </head>
 
@@ -53,12 +59,12 @@ HTML
 
 HEADER_ROWS = ERB.new <<~HTML
   <tr>
-    <th>input</th>
+    <th></th>
     <th colspan="100">worker</th>
   </tr>
 
   <tr>
-    <th></th>
+    <th>input</th>
     <% row[:outputs].each do |col| %>
       <th>
         <%= col[:worker_so] %>
