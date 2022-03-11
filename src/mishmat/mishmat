@@ -27,6 +27,10 @@ HEADER = ERB.new <<~HTML
           border: 1px solid black;
         }
 
+        table tr:hover > td {
+          border: 5px solid black;
+        }
+
         th, td {
           text-align: left;
         }
