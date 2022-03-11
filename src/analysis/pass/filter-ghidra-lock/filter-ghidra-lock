@@ -1,0 +1,28 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# filter-ghidra-lock: Find Ghidra results that decode to "LOCK"
+# instruction. "LOCK" is a prefix, not a real instruction:
+# https://github.com/NationalSecurityAgency/ghidra/issues/2033#issue-645334803
+
+require "json"
+
+GHIDRA_SO = "./src/worker/ghidra/ghidra.so"
+
+warn "[+] pass: filter-ghidra-lock"
+
+count = 0
+$stdin.each_line do |line|
+  result = JSON.parse line, symbolize_names: true
+
+  ghidra = result[:outputs].find { |o| o[:worker_so] == GHIDRA_SO }
+
+  if ghidra[:result] == "LOCK"
+    count += 1
+    next
+  end
+
+  $stdout.puts result.to_json
+end
+
+warn "[+] pass: filter-ghidra-lock done: #{count} filtered"
