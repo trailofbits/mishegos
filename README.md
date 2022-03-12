@@ -85,6 +85,15 @@ Generate an ~ugly~ pretty visualization of the filtered results:
 open /tmp/mishegos.html
 ```
 
+Tip: The HTML file that `mishmat` generates could be hundreds of megabytes large, which will likely result in a bad browser viewing experience. Using the [`split`](https://man7.org/linux/man-pages/man1/split.1.html) tool, you can create multiple smaller HTML files with a specified number of entries per file (10,000 in the following example) and load each of them separately:
+
+```bash
+mkdir /tmp/mishegos-html
+split -d --lines=10000 - /tmp/mishegos-html/mishegos_ \
+    --additional-suffix='.html' --filter='./src/mishmat/mishmat > $FILE' \
+    < /tmp/mishegos.interesting
+```
+
 ### Contributing
 
 We welcome contributors to mishegos!
