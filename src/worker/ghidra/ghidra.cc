@@ -30,7 +30,7 @@ public:
     length = sz;
   }
   virtual void loadFill(uint1 *ptr, int4 size, const Address &addr);
-  virtual string getArchType(void) const {
+  string getArchType(void) const override {
     return "x86:LE:64:default";
   }
   virtual void adjustVma(long adjust) {
@@ -65,7 +65,6 @@ class AssemblyMishegos : public AssemblyEmit {
 public:
   AssemblyMishegos(decode_result *dr) : result(dr){};
   virtual void dump(const Address &addr, const string &mnem, const string &body) {
-    // std::cout << ": " << mnem << ' ' << body << std::endl;
     result->status = S_SUCCESS;
     result->len =
         snprintf(result->result, MISHEGOS_DEC_MAXLEN, "%s %s\n", mnem.c_str(), body.c_str());
@@ -111,10 +110,10 @@ void worker_ctor() {
   //   void Architecture::parseProcessorConfig(DocumentStorage &store)
   const Element *el = docstorage.getTag("processor_spec");
   const List &list(el->getChildren());
-  for (List::const_iterator iter = list.begin(); iter != list.end(); ++iter) {
-    const string &elname((*iter)->getName());
+  for (const auto &l : list) {
+    const string &elname(l->getName());
     if (elname == "context_data") {
-      context.restoreFromSpec(*iter, &trans);
+      context.restoreFromSpec(l, &trans);
       break;
     }
   }
