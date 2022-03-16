@@ -11,6 +11,7 @@ set_target_properties(mishegos_ghidra
     OUTPUT_NAME ghidra
     PREFIX ""
 )
+target_compile_features(mishegos_ghidra PUBLIC cxx_std_11)
 
 target_link_libraries(mishegos_ghidra PRIVATE sleigh::sla)
 
