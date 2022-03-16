@@ -1,18 +1,18 @@
 [submodule "src/worker/capstone/capstone"]
 	path = src/worker/capstone/capstone
-	url = git://github.com/aquynh/capstone.git
+	url = https://github.com/aquynh/capstone.git
 [submodule "src/worker/xed/xed"]
 	path = src/worker/xed/xed
-	url = git://github.com/intelxed/xed.git
+	url = https://github.com/intelxed/xed.git
 [submodule "src/worker/xed/mbuild"]
 	path = src/worker/xed/mbuild
-	url = git://github.com/intelxed/mbuild.git
+	url = https://github.com/intelxed/mbuild.git
 [submodule "src/worker/zydis/zydis"]
 	path = src/worker/zydis/zydis
-	url = git://github.com/zyantific/zydis.git
+	url = https://github.com/zyantific/zydis.git
 [submodule "src/worker/udis86/udis86"]
 	path = src/worker/udis86/udis86
-	url = git://github.com/vmt/udis86.git
+	url = https://github.com/vmt/udis86.git
 [submodule "src/worker/dynamorio/dynamorio"]
 	path = src/worker/dynamorio/dynamorio
 	url = https://github.com/DynamoRIO/dynamorio.git
