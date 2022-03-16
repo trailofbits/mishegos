@@ -29,11 +29,11 @@ public:
     data = ptr;
     length = sz;
   }
-  virtual void loadFill(uint1 *ptr, int4 size, const Address &addr);
+  virtual void loadFill(uint1 *ptr, int4 size, const Address &addr) override;
   string getArchType(void) const override {
     return "x86:LE:64:default";
   }
-  virtual void adjustVma(long adjust) {
+  virtual void adjustVma(long) override {
   }
   virtual void setData(uint1 *ptr, int4 sz) {
     this->data = ptr;
@@ -64,7 +64,7 @@ class AssemblyMishegos : public AssemblyEmit {
 
 public:
   AssemblyMishegos(decode_result *dr) : result(dr){};
-  virtual void dump(const Address &addr, const string &mnem, const string &body) {
+  virtual void dump(const Address &, const string &mnem, const string &body) {
     result->status = S_SUCCESS;
     result->len =
         snprintf(result->result, MISHEGOS_DEC_MAXLEN, "%s %s\n", mnem.c_str(), body.c_str());
@@ -74,18 +74,32 @@ public:
 static const uintb START_ADDRESS = 0x0;
 
 // Storing data files
-static DocumentStorage docstorage;
+DocumentStorage &g_docstorage() {
+  static DocumentStorage docstorage;
+  return docstorage;
+}
 
 // Context for disassembly
-static ContextInternal context;
+ContextInternal &g_context() {
+  static ContextInternal context;
+  return context;
+}
 
 // Loader for reading instruction bytes
-static MyLoadImage loader(START_ADDRESS, nullptr, 0);
+MyLoadImage &g_loader() {
+  static MyLoadImage loader(START_ADDRESS, nullptr, 0);
+  return loader;
+}
 
 // Translator for doing disassembly
-static SleighMishegos trans(&loader, &context);
+SleighMishegos &g_trans() {
+  static SleighMishegos trans(&g_loader(), &g_context());
+  return trans;
+}
 
 void worker_ctor() {
+  SleighMishegos &trans = g_trans();
+
   // Set up the assembler/pcode-translator
   string sleighfilename = "src/worker/ghidra/build/sleigh-cmake/specfiles/Ghidra/Processors/x86/"
                           "data/languages/x86-64.sla";
@@ -94,15 +108,13 @@ void worker_ctor() {
                          "data/languages/x86-64.pspec";
 
   // Read sleigh and spec file into DOM
+  DocumentStorage &docstorage = g_docstorage();
   Element *sleighroot = docstorage.openDocument(sleighfilename)->getRoot();
   docstorage.registerTag(sleighroot);
   Element *specroot = docstorage.openDocument(pspecfilename)->getRoot();
   docstorage.registerTag(specroot);
 
   trans.initialize(docstorage); // Initialize the translator
-  // Single instruction disasm. Prevent instructions from messing up future
-  // instruction disassembly
-  trans.allowContextSet(false);
 
   // Now that context symbol names are loaded by the translator
   // we can set the default context
@@ -110,6 +122,7 @@ void worker_ctor() {
   //   void Architecture::parseProcessorConfig(DocumentStorage &store)
   const Element *el = docstorage.getTag("processor_spec");
   const List &list(el->getChildren());
+  ContextInternal &context = g_context();
   for (const auto &l : list) {
     const string &elname(l->getName());
     if (elname == "context_data") {
@@ -117,9 +130,16 @@ void worker_ctor() {
       break;
     }
   }
+
+  // Single instruction disasm. Prevent instructions from messing up future
+  // instruction disassembly
+  trans.allowContextSet(false);
 }
 
 void try_decode(decode_result *result, uint8_t *raw_insn, uint8_t length) {
+  MyLoadImage &loader = g_loader();
+  const SleighMishegos &trans = g_trans();
+
   loader.setData(raw_insn, length);
 
   // Set up the disassembly dumper

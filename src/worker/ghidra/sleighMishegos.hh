@@ -30,17 +30,17 @@ class SleighMishegos : public SleighBase {
   void clearForDelete(void);		///< Delete the context and disassembly caches
 protected:
   ParserContext *obtainContext(const Address &addr,int4 state) const;
-  void resolve(ParserContext &pos) const;	///< Generate a parse tree suitable for disassembly
-  void resolveHandles(ParserContext &pos) const;	///< Prepare the parse tree for p-code generation
+  void resolve(ParserContext &pc) const;	///< Generate a parse tree suitable for disassembly
+  void resolveHandles(ParserContext &pc) const;	///< Prepare the parse tree for p-code generation
 public:
   SleighMishegos(LoadImage *ld,ContextDatabase *c_db);		///< Constructor
-  virtual ~SleighMishegos(void);				///< Destructor
+  ~SleighMishegos(void) override;				///< Destructor
   void reset(LoadImage *ld,ContextDatabase *c_db);	///< Reset the engine for a new program
-  virtual void initialize(DocumentStorage &store);
-  virtual void registerContext(const string &name,int4 sbit,int4 ebit);
-  virtual void setContextDefault(const string &nm,uintm val);
-  virtual void allowContextSet(bool val) const;
-  virtual int4 instructionLength(const Address &baseaddr) const;
-  virtual int4 oneInstruction(PcodeEmit &emit,const Address &baseaddr) const;
-  virtual int4 printAssembly(AssemblyEmit &emit,const Address &baseaddr) const;
+  void initialize(DocumentStorage &store) override;
+  void registerContext(const string &name,int4 sbit,int4 ebit) override;
+  void setContextDefault(const string &nm,uintm val) override;
+  void allowContextSet(bool val) const override;
+  int4 instructionLength(const Address &baseaddr) const override;
+  int4 oneInstruction(PcodeEmit &emit, const Address &baseaddr) const override;
+  int4 printAssembly(AssemblyEmit &emit, const Address &baseaddr) const override;
 };

@@ -33,10 +33,7 @@ SleighMishegos::SleighMishegos(LoadImage *ld, ContextDatabase *c_db)
   loader = ld;
   context_db = c_db;
   cache = new ContextCache(c_db);
-  pos = new ParserContext(cache);
-
-  // Values taken from DisassemblyCache::initialize
-  pos->initialize(75, 20, getConstantSpace());
+  pos = nullptr;
 }
 
 void SleighMishegos::clearForDelete(void)
@@ -77,6 +74,11 @@ void SleighMishegos::initialize(DocumentStorage &store)
     restoreXml(el);
   } else
     reregisterContext();
+
+  pos = new ParserContext(cache);
+
+  // Values taken from DisassemblyCache::initialize
+  pos->initialize(75, 20, getConstantSpace());
 }
 
 /// \brief Obtain a parse tree for the instruction at the given address
@@ -104,21 +106,21 @@ ParserContext *SleighMishegos::obtainContext(const Address &addr, int4 state) co
 }
 
 /// Resolve \e all the constructors involved in the instruction at the indicated address
-/// \param pos is the parse object that will hold the resulting tree
-void SleighMishegos::resolve(ParserContext &pos) const
+/// \param pc is the parse object that will hold the resulting tree
+void SleighMishegos::resolve(ParserContext &pc) const
 
 {
-  loader->loadFill(pos.getBuffer(), 16, pos.getAddr());
-  ParserWalkerChange walker(&pos);
-  pos.deallocateState(walker); // Clear the previous resolve and initialize the walker
+  loader->loadFill(pc.getBuffer(), 16, pc.getAddr());
+  ParserWalkerChange walker(&pc);
+  pc.deallocateState(walker); // Clear the previous resolve and initialize the walker
   Constructor *ct, *subct;
   uint4 off;
   int4 oper, numoper;
 
-  pos.setDelaySlot(0);
+  pc.setDelaySlot(0);
   walker.setOffset(0);        // Initial offset
-  pos.clearCommits();         // Clear any old context commits
-  pos.loadContext();          // Get context for current address
+  pc.clearCommits();          // Clear any old context commits
+  pc.loadContext();           // Get context for current address
   ct = root->resolve(walker); // Base constructor
   walker.setConstructor(ct);
   ct->applyContext(walker);
@@ -129,7 +131,7 @@ void SleighMishegos::resolve(ParserContext &pos) const
     while (oper < numoper) {
       OperandSymbol *sym = ct->getOperand(oper);
       off = walker.getOffset(sym->getOffsetBase()) + sym->getRelativeOffset();
-      pos.allocateOperand(oper, walker); // Descend into new operand and reserve space
+      pc.allocateOperand(oper, walker); // Descend into new operand and reserve space
       walker.setOffset(off);
       TripleSymbol *tsym = sym->getDefiningSymbol();
       if (tsym != (TripleSymbol *)0) {
@@ -150,24 +152,24 @@ void SleighMishegos::resolve(ParserContext &pos) const
       // Check for use of delayslot
       ConstructTpl *templ = ct->getTempl();
       if ((templ != (ConstructTpl *)0) && (templ->delaySlot() > 0))
-        pos.setDelaySlot(templ->delaySlot());
+        pc.setDelaySlot(templ->delaySlot());
     }
   }
-  pos.setNaddr(pos.getAddr() + pos.getLength()); // Update Naddr to pointer after instruction
-  pos.setParserState(ParserContext::disassembly);
+  pc.setNaddr(pc.getAddr() + pc.getLength()); // Update Naddr to pointer after instruction
+  pc.setParserState(ParserContext::disassembly);
 }
 
 /// Resolve handle templates for the given parse tree, assuming Constructors
 /// are already resolved.
-/// \param pos is the given parse tree
-void SleighMishegos::resolveHandles(ParserContext &pos) const
+/// \param pc is the given parse tree
+void SleighMishegos::resolveHandles(ParserContext &pc) const
 
 {
   TripleSymbol *triple;
   Constructor *ct;
   int4 oper, numoper;
 
-  ParserWalker walker(&pos);
+  ParserWalker walker(&pc);
   walker.baseState();
   while (walker.isState()) {
     ct = walker.getConstructor();
@@ -186,7 +188,7 @@ void SleighMishegos::resolveHandles(ParserContext &pos) const
         PatternExpression *patexp = sym->getDefiningExpression();
         intb res = patexp->getValue(walker);
         FixedHandle &hand(walker.getParentHandle());
-        hand.space = pos.getConstSpace(); // Result of expression is a constant
+        hand.space = pc.getConstSpace(); // Result of expression is a constant
         hand.offset_space = (AddrSpace *)0;
         hand.offset_offset = (uintb)res;
         hand.size = 0; // This size should not get used
@@ -207,14 +209,14 @@ void SleighMishegos::resolveHandles(ParserContext &pos) const
       walker.popOperand();
     }
   }
-  pos.setParserState(ParserContext::pcode);
+  pc.setParserState(ParserContext::pcode);
 }
 
 int4 SleighMishegos::instructionLength(const Address &baseaddr) const
 
 {
-  ParserContext *pos = obtainContext(baseaddr, ParserContext::disassembly);
-  return pos->getLength();
+  ParserContext *pc = obtainContext(baseaddr, ParserContext::disassembly);
+  return pc->getLength();
 }
 
 int4 SleighMishegos::printAssembly(AssemblyEmit &emit, const Address &baseaddr) const
@@ -222,8 +224,8 @@ int4 SleighMishegos::printAssembly(AssemblyEmit &emit, const Address &baseaddr) 
 {
   int4 sz;
 
-  ParserContext *pos = obtainContext(baseaddr, ParserContext::disassembly);
-  ParserWalker walker(pos);
+  ParserContext *pc = obtainContext(baseaddr, ParserContext::disassembly);
+  ParserWalker walker(pc);
   walker.baseState();
 
   Constructor *ct = walker.getConstructor();
@@ -232,11 +234,11 @@ int4 SleighMishegos::printAssembly(AssemblyEmit &emit, const Address &baseaddr) 
   ostringstream body;
   ct->printBody(body, walker);
   emit.dump(baseaddr, mons.str(), body.str());
-  sz = pos->getLength();
+  sz = pc->getLength();
   return sz;
 }
 
-int4 SleighMishegos::oneInstruction(PcodeEmit &emit, const Address &baseaddr) const
+int4 SleighMishegos::oneInstruction(PcodeEmit &, const Address &) const
 
 {
   throw UnimplError("Unimplemented oneInstruction", 0);
