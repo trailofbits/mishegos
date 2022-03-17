@@ -26,26 +26,19 @@
 
 /// \param ld is the LoadImage to draw program bytes from
 /// \param c_db is the context database
-SleighMishegos::SleighMishegos(LoadImage *ld, ContextDatabase *c_db)
-    : SleighBase()
-
-{
+SleighMishegos::SleighMishegos(LoadImage *ld, ContextDatabase *c_db) : SleighBase() {
   loader = ld;
   context_db = c_db;
   cache = new ContextCache(c_db);
   pos = nullptr;
 }
 
-void SleighMishegos::clearForDelete(void)
-
-{
+void SleighMishegos::clearForDelete(void) {
   delete cache;
   delete pos;
 }
 
-SleighMishegos::~SleighMishegos(void)
-
-{
+SleighMishegos::~SleighMishegos(void) {
   clearForDelete();
 }
 
@@ -53,9 +46,7 @@ SleighMishegos::~SleighMishegos(void)
 /// with a new LoadImage and ContextDatabase
 /// \param ld is the new LoadImage
 /// \param c_db is the new ContextDatabase
-void SleighMishegos::reset(LoadImage *ld, ContextDatabase *c_db)
-
-{
+void SleighMishegos::reset(LoadImage *ld, ContextDatabase *c_db) {
   clearForDelete();
   loader = ld;
   context_db = c_db;
@@ -64,9 +55,7 @@ void SleighMishegos::reset(LoadImage *ld, ContextDatabase *c_db)
 
 /// The .sla file from the document store is loaded and cache objects are prepared
 /// \param store is the document store containing the main \<sleigh> tag.
-void SleighMishegos::initialize(DocumentStorage &store)
-
-{
+void SleighMishegos::initialize(DocumentStorage &store) {
   if (!isInitialized()) { // Initialize the base if not already
     const Element *el = store.getTag("sleigh");
     if (el == (const Element *)0)
@@ -90,9 +79,7 @@ void SleighMishegos::initialize(DocumentStorage &store)
 /// \param addr is the given address of the instruction
 /// \param state is the desired parse state.
 /// \return the parse tree object (ParseContext)
-ParserContext *SleighMishegos::obtainContext(const Address &addr, int4 state) const
-
-{
+ParserContext *SleighMishegos::obtainContext(const Address &addr, int4 state) const {
   pos->setAddr(addr);
   pos->setParserState(ParserContext::uninitialized);
 
@@ -107,9 +94,7 @@ ParserContext *SleighMishegos::obtainContext(const Address &addr, int4 state) co
 
 /// Resolve \e all the constructors involved in the instruction at the indicated address
 /// \param pc is the parse object that will hold the resulting tree
-void SleighMishegos::resolve(ParserContext &pc) const
-
-{
+void SleighMishegos::resolve(ParserContext &pc) const {
   loader->loadFill(pc.getBuffer(), 16, pc.getAddr());
   ParserWalkerChange walker(&pc);
   pc.deallocateState(walker); // Clear the previous resolve and initialize the walker
@@ -162,9 +147,7 @@ void SleighMishegos::resolve(ParserContext &pc) const
 /// Resolve handle templates for the given parse tree, assuming Constructors
 /// are already resolved.
 /// \param pc is the given parse tree
-void SleighMishegos::resolveHandles(ParserContext &pc) const
-
-{
+void SleighMishegos::resolveHandles(ParserContext &pc) const {
   TripleSymbol *triple;
   Constructor *ct;
   int4 oper, numoper;
@@ -212,16 +195,12 @@ void SleighMishegos::resolveHandles(ParserContext &pc) const
   pc.setParserState(ParserContext::pcode);
 }
 
-int4 SleighMishegos::instructionLength(const Address &baseaddr) const
-
-{
+int4 SleighMishegos::instructionLength(const Address &baseaddr) const {
   ParserContext *pc = obtainContext(baseaddr, ParserContext::disassembly);
   return pc->getLength();
 }
 
-int4 SleighMishegos::printAssembly(AssemblyEmit &emit, const Address &baseaddr) const
-
-{
+int4 SleighMishegos::printAssembly(AssemblyEmit &emit, const Address &baseaddr) const {
   int4 sz;
 
   ParserContext *pc = obtainContext(baseaddr, ParserContext::disassembly);
@@ -238,26 +217,18 @@ int4 SleighMishegos::printAssembly(AssemblyEmit &emit, const Address &baseaddr) 
   return sz;
 }
 
-int4 SleighMishegos::oneInstruction(PcodeEmit &, const Address &) const
-
-{
+int4 SleighMishegos::oneInstruction(PcodeEmit &, const Address &) const {
   throw UnimplError("Unimplemented oneInstruction", 0);
 }
 
-void SleighMishegos::registerContext(const string &name, int4 sbit, int4 ebit)
-
-{
+void SleighMishegos::registerContext(const string &name, int4 sbit, int4 ebit) {
   context_db->registerVariable(name, sbit, ebit);
 }
 
-void SleighMishegos::setContextDefault(const string &name, uintm val)
-
-{
+void SleighMishegos::setContextDefault(const string &name, uintm val) {
   context_db->setVariableDefault(name, val);
 }
 
-void SleighMishegos::allowContextSet(bool val) const
-
-{
+void SleighMishegos::allowContextSet(bool val) const {
   cache->allowSet(val);
 }
