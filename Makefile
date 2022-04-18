@@ -29,7 +29,7 @@ ALL_SRCS := $(shell \
 		-path '*/ghidra/sleigh-cmake/*' \
 	\) \
 	-prune \
-	-o \( -name '*.c' -o -name '*.cc' -o -name '*.h' \) -print \
+	-o \( -name '*.c' -o -name '*.cc' -o -name '*.h' -o -name '*.hh' \) -print \
 )
 
 .PHONY: all
