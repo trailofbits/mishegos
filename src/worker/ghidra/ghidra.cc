@@ -15,7 +15,7 @@
 #include "mish_common.h"
 
 extern "C" {
-char *worker_name = (char *)"ghidra";
+const char *worker_name = (const char *)"ghidra";
 
 void worker_ctor();
 
@@ -31,10 +31,8 @@ class MyLoadImage : public LoadImage {
 public:
   // "nofile" doesn't have any special meaning. Just doing what was done in
   // sleighExample.cc
-  MyLoadImage(uintb ad, uint1 *ptr, int4 sz) : LoadImage("nofile") {
-    baseaddr = ad;
-    data = ptr;
-    length = sz;
+  MyLoadImage(uintb ad, uint1 *ptr, int4 sz)
+      : LoadImage("nofile"), baseaddr{ad}, length{sz}, data{ptr} {
   }
   virtual void loadFill(uint1 *ptr, int4 size, const Address &addr) override;
   string getArchType(void) const override {
