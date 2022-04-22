@@ -1,3 +1,8 @@
+/**
+ * This file is based loosely on Ghidra's sleighexample.cc file for
+ * initializing and loading bytes for sleigh to disassemble
+ *   https://github.com/NationalSecurityAgency/ghidra/blob/47f76c78d6b7d5c56a9256b0666620863805ff30/Ghidra/Features/Decompiler/src/decompile/cpp/sleighexample.cc
+ */
 #include <sleigh/loadimage.hh>
 
 #include <iostream>
@@ -24,6 +29,8 @@ class MyLoadImage : public LoadImage {
   uint1 *data;
 
 public:
+  // "nofile" doesn't have any special meaning. Just doing what was done in
+  // sleighExample.cc
   MyLoadImage(uintb ad, uint1 *ptr, int4 sz) : LoadImage("nofile") {
     baseaddr = ad;
     data = ptr;
