@@ -1,0 +1,3 @@
+name: filter-ghidra-lock
+desc: Find ghidra results that decode to LOCK
+run: filter-ghidra-lock

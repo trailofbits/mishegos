@@ -1,0 +1,3 @@
+name: filter-destroy-ghidra
+desc: Find results that only ghidra gets right (or wrong)
+run: filter-destroy-ghidra

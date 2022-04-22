@@ -1,0 +1,34 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# filter-destroy-ghidra: find results that only ghidra gets right (or wrong)
+
+require "json"
+
+XED_SO = "./src/worker/xed/xed.so"
+ZYDIS_SO = "./src/worker/zydis/zydis.so"
+ICED_SO = "./src/worker/iced/iced.so"
+GHIDRA_SO = "./src/worker/ghidra/ghidra.so"
+
+warn "[+] pass: filter-destroy-ghidra"
+
+count = 0
+$stdin.each_line do |line|
+  result = JSON.parse line, symbolize_names: true
+
+  xed = result[:outputs].find { |o| o[:worker_so] == XED_SO }
+  zydis = result[:outputs].find { |o| o[:worker_so] == ZYDIS_SO }
+  iced = result[:outputs].find { |o| o[:worker_so] == ICED_SO }
+  ghidra = result[:outputs].find { |o| o[:worker_so] == GHIDRA_SO }
+
+  if ghidra[:status][:value] == xed[:status][:value] &&
+      ghidra[:status][:value] == zydis[:status][:value] &&
+      ghidra[:status][:value] == iced[:status][:value]
+    count += 1
+    next
+  end
+
+  $stdout.puts result.to_json
+end
+
+warn "[+] pass: filter-destroy-ghidra done: #{count} filtered"
