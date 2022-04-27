@@ -60,12 +60,13 @@ module PassOperations
 
   # This is just a topological sort of our pass DAG.
   # Why? Nescio; sed fieri sentio et excrucior.
+  # NOTE: Currently unused; we assume that the analysis's order is valid.
   def order!
     hai "realizing pass DAG into a concrete order"
 
     graph = build_graph!
     ordered = []
-    node_set = Set.new
+    node_set = []
 
     # Our initial node set consists of only nodes that don't have a predecessor.
     graph.nodes.each do |node|
@@ -75,8 +76,7 @@ module PassOperations
     end
 
     until node_set.empty?
-      # There's probably a better way to sample a random node from the node set.
-      node = node_set.to_a.sample.tap { |n| node_set.delete n }
+      node = node_set.shift
       ordered << node
 
       succ_nodes = graph.nodes.select { |s| graph.edges.include?([node, s]) }
@@ -137,14 +137,19 @@ hai "#{opts[:profile]} passes: #{profile}"
 
 passes = PASS_DIR.children.select(&:directory?).map do |pass_dir|
   load_pass! pass_dir
-end.to_set
+end
 
-passes.select! { |p| profile.include?(p.name) }
+# Select only the passes defined by the profile, and sort them by their order
+# in the profile.
+passes
+  .select! { |p| profile.include? p.name }
+  .sort_by! { |p| profile.index p.name }
+passes.extend PassOperations
+passes.verify!
 
 if opts[:describe]
   puts opts[:profile]
   passes.each { |pass| puts "\t#{pass.name}: #{pass.desc}" }
 else
-  passes.extend PassOperations
-  passes.verify!.order!.run!
+  passes.run!
 end
