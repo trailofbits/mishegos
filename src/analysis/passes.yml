@@ -56,10 +56,10 @@ destroy-ghidra:
   - filter-all-success
   - filter-ndecoded-same
   - dedupe
+  - normalize
   - filter-ghidra-lock
   - filter-destroy-ghidra
   - minimize-input
-  - normalize
 
 xed-overaccept:
   - filter-all-success
