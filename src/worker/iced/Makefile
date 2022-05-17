@@ -1,10 +1,18 @@
+UNAME := $(shell uname)
+
+SO := so
+
+ifeq ($(UNAME), Darwin)
+	SO := dylib
+endif
+
 .PHONY: all
 all: iced.so
 
-iced.so: target/release/libiced.so
-	cp target/release/libiced.so $@
+iced.so: target/release/libiced.$(SO)
+	cp target/release/libiced.$(SO) $@
 
-target/release/libiced.so:
+target/release/libiced.$(SO):
 	cargo test --release
 	cargo build --release
 

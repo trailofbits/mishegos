@@ -1,7 +1,7 @@
 export CFLAGS := \
 	-std=gnu11 -Wall -pthread \
 	-I$(shell pwd)/src/include
-export LDLIBS := -ldl -lrt -lpthread
+export LDLIBS := -ldl -lpthread
 export CPPFLAGS :=
 export CXXFLAGS := \
 	-std=c++11 -Wall -pthread \

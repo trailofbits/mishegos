@@ -384,10 +384,10 @@ static void work() {
 
     if (verbose) {
       if (counts.islots % 1000 == 0) {
-        VERBOSE("inputs processed: %lu", counts.islots);
+        VERBOSE("inputs processed: %llu", counts.islots);
       }
       if (counts.oslots % 1000 == 0) {
-        VERBOSE("outputs processed: %lu", counts.oslots);
+        VERBOSE("outputs processed: %llu", counts.oslots);
       }
     }
 
