@@ -4,15 +4,13 @@ override CXXFLAGS :=
 .PHONY: all
 all: ghidra.so
 
-.PHONY: ghidra.so
-.ONESHELL:
 ghidra.so:
 	cmake -B build -S . \
-		-DCMAKE_BUILD_TYPE=Release \
-		-Dsleigh_GHIDRA_RELEASE_TYPE=HEAD \
-		"-DFETCHCONTENT_SOURCE_DIR_GHIDRASOURCE=./ghidra"
-	cmake --build build -j --verbose
-	cp build/ghidra.so ./ghidra.so
+			-DCMAKE_BUILD_TYPE=Release \
+			-Dsleigh_GHIDRA_RELEASE_TYPE=HEAD \
+			"-DFETCHCONTENT_SOURCE_DIR_GHIDRASOURCE=./ghidra" && \
+		cmake --build build -j --verbose && \
+		cp build/ghidra.$(SO_SUFFIX) ./ghidra.so
 
 # Uncomment to build with address sanitizer. Remember to remove 'build'
 # directory if switching between the two

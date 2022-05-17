@@ -18,6 +18,13 @@ int mish_getrandom(void *buf, size_t buflen, unsigned int flags) {
 }
 #endif
 
+#elif defined __APPLE__ && defined __MACH__
+
+#include <sys/random.h>
+int mish_getrandom(void *buf, size_t buflen, unsigned int flags) {
+  return getentropy(buf, buflen);
+}
+
 #else
 #error "we only support linux + glibc at the moment; help us out!"
 #endif

@@ -35,6 +35,7 @@
 #include <sys/wait.h>
 #include <setjmp.h>
 #include <time.h>
+#include <inttypes.h>
 
 #define VERBOSE(fmt, ...)                                                                          \
   if (verbose) {                                                                                   \

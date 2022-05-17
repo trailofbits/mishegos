@@ -1,10 +1,10 @@
 .PHONY: all
 all: iced.so
 
-iced.so: target/release/libiced.so
-	cp target/release/libiced.so $@
+iced.so: target/release/libiced.$(SO_SUFFIX)
+	cp target/release/libiced.$(SO_SUFFIX) $@
 
-target/release/libiced.so:
+target/release/libiced.$(SO_SUFFIX):
 	cargo test --release
 	cargo build --release
 
