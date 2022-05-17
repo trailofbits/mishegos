@@ -1,14 +1,6 @@
 override LDFLAGS :=
 override CXXFLAGS :=
 
-UNAME := $(shell uname)
-
-SO := so
-
-ifeq ($(UNAME), Darwin)
-	SO := dylib
-endif
-
 .PHONY: all
 all: ghidra.so
 
@@ -18,7 +10,7 @@ ghidra.so:
 			-Dsleigh_GHIDRA_RELEASE_TYPE=HEAD \
 			"-DFETCHCONTENT_SOURCE_DIR_GHIDRASOURCE=./ghidra" && \
 		cmake --build build -j --verbose && \
-		cp build/ghidra.$(SO) ./ghidra.so
+		cp build/ghidra.$(SO_SUFFIX) ./ghidra.so
 
 # Uncomment to build with address sanitizer. Remember to remove 'build'
 # directory if switching between the two

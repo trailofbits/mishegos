@@ -11,6 +11,15 @@ export CXXFLAGS := \
 export RUST_BINDGEN_CLANG_ARGS := \
 	-I$(shell pwd)/src/include
 
+export UNAME := $(shell uname)
+
+ifeq ($(UNAME), Darwin)
+	export SO_SUFFIX := dylib
+else
+	export SO_SUFFIX := so
+endif
+
+
 ALL_SRCS := $(shell \
 	find . -type f \
 	\( \
