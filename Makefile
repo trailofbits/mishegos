@@ -1,23 +1,33 @@
-export CFLAGS := \
+UNAME := $(shell uname)
+
+CFLAGS := \
 	-std=gnu11 -Wall -pthread \
 	-I$(shell pwd)/src/include
-export LDLIBS := -ldl -lpthread
-export CPPFLAGS :=
-export CXXFLAGS := \
+LDLIBS := -ldl -lpthread
+CPPFLAGS :=
+CXXFLAGS := \
 	-std=c++11 -Wall -pthread \
 	-I$(shell pwd)/src/include
 # TODO(ww): https://github.com/rust-lang/rust-bindgen/issues/1651
-# export RUSTFLAGS := -D warnings
-export RUST_BINDGEN_CLANG_ARGS := \
+# RUSTFLAGS := -D warnings
+RUST_BINDGEN_CLANG_ARGS := \
 	-I$(shell pwd)/src/include
 
-export UNAME := $(shell uname)
-
 ifeq ($(UNAME), Darwin)
-	export SO_SUFFIX := dylib
+	SO_SUFFIX := dylib
 else
-	export SO_SUFFIX := so
+	SO_SUFFIX := so
+ 	# Linux needs -lrt for the POSIX shm(3) family calls.
+	LDLIBS := $(LDLIBS) -lrt
 endif
+
+export UNAME
+export CFLAGS
+export LDLIBS
+export CPPFLAGS
+export CXXFLAGS
+export RUST_BINDGEN_CLANG_ARGS
+export SO_SUFFIX
 
 
 ALL_SRCS := $(shell \
