@@ -1,6 +1,6 @@
 override CPPFLAGS := $(CPPFLAGS) -DLINUX -DX86_64 -DDR_FAST_IR -Iobj/include
 override LDFLAGS := $(LDFLAGS) -Lobj/lib64
-override LDLIBS := $(LDLIBS) -ldrdecode
+override LDLIBS := $(LDLIBS) -ldrdecode -ldrlibc
 
 DYNAMORIO_BUILD_OPTS := -DBUILD_DRSTATS=NO \
 	-DBUILD_SAMPLES=NO \
@@ -16,7 +16,8 @@ dynamorio.so: dynamorio.o
 obj/lib64/libdrdecode.a:
 	mkdir -p obj && \
 		cd obj && \
-		cmake $(DYNAMORIO_BUILD_OPTS) ../dynamorio && \
+		env -u CFLAGS -u CXXFLAGS \
+			cmake $(DYNAMORIO_BUILD_OPTS) ../dynamorio && \
 		cmake --build . -- -j4
 
 dynamorio.o: dynamorio.c obj/lib64/libdrdecode.a

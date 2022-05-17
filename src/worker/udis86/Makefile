@@ -24,3 +24,4 @@ udis86.o: udis86/build/lib/libudis86.so udis86.c
 clean:
 	make -C udis86 clean
 	rm -rf *.o *.so
+	rm -rf udis86/build
