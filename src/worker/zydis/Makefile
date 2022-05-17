@@ -1,5 +1,6 @@
 # Include stupidity.
 override CPPFLAGS := $(CPPFLAGS) \
+	-DZYDIS_STATIC_BUILD \
 	-Izydis/include \
 	-Izydis/dependencies/zycore/include \
 	-Izydis/build \
@@ -13,7 +14,7 @@ zydis/build/libZydis.a:
 	cd zydis
 	mkdir build
 	cd build
-	cmake ..
+	cmake -DZYDIS_BUILD_TOOLS=OFF -DZYDIS_BUILD_EXAMPLES=OFF -DZYDIS_STATIC_DEFINE=ON ..
 	cmake --build . -- -j4
 
 zydis.so: zydis.o
