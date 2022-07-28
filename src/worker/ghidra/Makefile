@@ -10,7 +10,7 @@ ghidra.so:
 			-DCMAKE_POSITION_INDEPENDENT_CODE=ON \
 			-Dsleigh_RELEASE_TYPE=HEAD \
 			"-DFETCHCONTENT_SOURCE_DIR_GHIDRASOURCE=./ghidra" && \
-		cmake --build build -j --verbose && \
+		cmake --build build --verbose && \
 		cp build/ghidra.$(SO_SUFFIX) ./ghidra.so
 
 # Uncomment to build with address sanitizer. Remember to remove 'build'
