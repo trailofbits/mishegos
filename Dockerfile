@@ -31,6 +31,6 @@ WORKDIR /app/mishegos
 COPY ./ .
 
 ARG TARGET=all
-RUN make "${TARGET}" -j
+RUN make "${TARGET}" -j $(nproc)
 
 CMD ["/bin/bash"]
