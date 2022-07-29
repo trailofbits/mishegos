@@ -13,7 +13,7 @@ set_target_properties(mishegos_ghidra
 )
 target_compile_features(mishegos_ghidra PUBLIC cxx_std_11)
 
-target_link_libraries(mishegos_ghidra PRIVATE sleigh::sla)
+target_link_libraries(mishegos_ghidra PRIVATE sleigh::sla sleigh::decomp)
 
 # TODO: Not sure how to get this into the project for only linking against the
 # mishegos shared library

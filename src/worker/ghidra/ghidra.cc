@@ -3,7 +3,9 @@
  * initializing and loading bytes for sleigh to disassemble
  *   https://github.com/NationalSecurityAgency/ghidra/blob/47f76c78d6b7d5c56a9256b0666620863805ff30/Ghidra/Features/Decompiler/src/decompile/cpp/sleighexample.cc
  */
+#include <sleigh/architecture.hh>
 #include <sleigh/loadimage.hh>
+#include <sleigh/marshal.hh>
 
 #include <iostream>
 #include <exception>
@@ -103,6 +105,9 @@ SleighMishegos &g_trans() {
 }
 
 void worker_ctor() {
+  AttributeId::initialize();
+  ElementId::initialize();
+
   SleighMishegos &trans = g_trans();
 
   // Set up the assembler/pcode-translator
@@ -126,15 +131,24 @@ void worker_ctor() {
   // This imitates what is done in
   //   void Architecture::parseProcessorConfig(DocumentStorage &store)
   const Element *el = docstorage.getTag("processor_spec");
-  const List &list(el->getChildren());
-  ContextInternal &context = g_context();
-  for (const auto &l : list) {
-    const string &elname(l->getName());
-    if (elname == "context_data") {
-      context.restoreFromSpec(l, &trans);
+  if (el == (const Element *)0)
+    throw LowlevelError("No processor configuration tag found");
+  XmlDecode decoder(&trans, el);
+
+  uint4 elemId = decoder.openElement(ELEM_PROCESSOR_SPEC);
+  for (;;) {
+    uint4 subId = decoder.peekElement();
+    if (subId == 0)
       break;
+    else if (subId == ELEM_CONTEXT_DATA) {
+      g_context().decodeFromSpec(decoder);
+      break;
+    } else {
+      decoder.openElement();
+      decoder.closeElementSkipping(subId);
     }
   }
+  decoder.closeElement(elemId);
 
   // Single instruction disasm. Prevent instructions from messing up future
   // instruction disassembly
