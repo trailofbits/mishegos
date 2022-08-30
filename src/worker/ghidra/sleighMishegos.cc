@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * This file was copied from upstream
- * https://github.com/NationalSecurityAgency/ghidra/blob/47f76c78d6b7d5c56a9256b0666620863805ff30/Ghidra/Features/Decompiler/src/decompile/cpp/sleigh.cc
+ * https://github.com/NationalSecurityAgency/ghidra/blob/2536099c0eb2683ee0e416a127f8a8795f8de853/Ghidra/Features/Decompiler/src/decompile/cpp/sleigh.cc
  *
  * Modified by Eric Kilmer at Trail of Bits 2022
  * Modified to better support mishegos single-shot disassembly by not using the
@@ -82,7 +82,7 @@ VarnodeData *PcodeCacher::expandPool(uint4 size)
     VarnodeData *ref = (*iter).dataptr;
     (*iter).dataptr = newpool + (ref - poolstart);
   }
-  
+
   delete [] poolstart;		// Free up old pool
   poolstart = newpool;
   curpool = newpool + (cursize + size);
@@ -298,7 +298,7 @@ void SleighBuilder::buildEmpty(Constructor *ct,int4 secnum)
 
 {
   int4 numops = ct->getNumOperands();
-  
+
   for(int4 i=0;i<numops;++i) {
     SubtableSymbol *sym = (SubtableSymbol *)ct->getOperand(i)->getDefiningSymbol();
     if (sym == (SubtableSymbol *)0) continue;
@@ -352,7 +352,7 @@ void SleighBuilder::appendBuild(OpTpl *bld,int4 secnum)
 				// Check if operand is a subtable
   SubtableSymbol *sym = (SubtableSymbol *)walker->getConstructor()->getOperand(index)->getDefiningSymbol();
   if ((sym==(SubtableSymbol *)0)||(sym->getType() != SleighSymbol::subtable_symbol)) return;
-  
+
   walker->pushOperand(index);
   Constructor *ct = walker->getConstructor();
   if (secnum >=0) {
@@ -427,7 +427,7 @@ void SleighBuilder::appendCrossBuild(OpTpl *bld,int4 secnum)
   const ParserContext *pos = discache->getParserContext( newaddr );
   if (pos->getParserState() != ParserContext::pcode)
     throw LowlevelError("Could not obtain cached crossbuild instruction");
-  
+
   ParserWalker newwalker( pos, tmp->getParserContext() );
   walker = &newwalker;
 
@@ -456,7 +456,7 @@ void DisassemblyCache::initialize(int4 min,int4 hashsize)
   nextfree = 0;
   hashtable = new ParserContext *[hashsize];
   for(int4 i=0;i<minimumreuse;++i) {
-    ParserContext *pos = new ParserContext(contextcache);
+    ParserContext *pos = new ParserContext(contextcache,translate);
     pos->initialize(75,20,constspace);
     list[i] = pos;
   }
@@ -474,13 +474,15 @@ void DisassemblyCache::free(void)
   delete [] hashtable;
 }
 
+/// \param trans is the Translate object instantiating this cache (for inst_next2 callbacks)
 /// \param ccache is the ContextCache front-end shared across all the parser contexts
 /// \param cspace is the constant address space used for minting constant Varnodes
 /// \param cachesize is the number of distinct ParserContext objects in this cache
 /// \param windowsize is the size of the ParserContext hash-table
-DisassemblyCache::DisassemblyCache(ContextCache *ccache,AddrSpace *cspace,int4 cachesize,int4 windowsize)
+DisassemblyCache::DisassemblyCache(Translate *trans,ContextCache *ccache,AddrSpace *cspace,int4 cachesize,int4 windowsize)
 
 {
+  translate = trans;
   contextcache = ccache;
   constspace = cspace;
   initialize(cachesize,windowsize);		// Set default settings for the cache
@@ -575,7 +577,7 @@ void SleighMishegos::initialize(DocumentStorage &store)
     parser_cachesize = 8;
     parser_windowsize = 256;
   }
-  pos = new ParserContext(cache);
+  pos = new ParserContext(cache,this);
   // Values taken from (now removed) DisassemblyCache::initialize. No
   // explanation for magic values
   pos->initialize(75, 20, getConstantSpace());
@@ -731,7 +733,7 @@ int4 SleighMishegos::printAssembly(AssemblyEmit &emit,const Address &baseaddr) c
   ParserContext *pos = obtainContext(baseaddr,ParserContext::disassembly);
   ParserWalker walker(pos);
   walker.baseState();
-  
+
   Constructor *ct = walker.getConstructor();
   ostringstream mons;
   ct->printMnemonic(mons,walker);
@@ -754,11 +756,11 @@ int4 SleighMishegos::oneInstruction(PcodeEmit &emit,const Address &baseaddr) con
       throw UnimplError(s.str(),0);
     }
   }
-  
+
   ParserContext *pos = obtainContext(baseaddr,ParserContext::pcode);
   pos->applyCommits();
   fallOffset = pos->getLength();
-  
+
   if (pos->getDelaySlot()>0) {
     int4 bytecount = 0;
     do {

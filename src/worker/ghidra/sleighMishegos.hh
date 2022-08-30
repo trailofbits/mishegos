@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  * This file was copied from upstream
- * https://github.com/NationalSecurityAgency/ghidra/blob/47f76c78d6b7d5c56a9256b0666620863805ff30/Ghidra/Features/Decompiler/src/decompile/cpp/sleigh.hh
+ * https://github.com/NationalSecurityAgency/ghidra/blob/2536099c0eb2683ee0e416a127f8a8795f8de853/Ghidra/Features/Decompiler/src/decompile/cpp/sleigh.hh
  *
  * Modified by Eric Kilmer at Trail of Bits 2022
  * Modified to better support mishegos single-shot disassembly by not using the
@@ -115,6 +115,7 @@ public:
 /// accessing the ContextDatabase and resolving context variables from the SLEIGH spec.
 /// ParserContext objects are stored in a hash-table keyed by the address of the instruction.
 class DisassemblyCache {
+  Translate *translate;		///< The Translate object that owns this cache
   ContextCache *contextcache;	///< Cached values from the ContextDatabase
   AddrSpace *constspace;	///< The constant address space
   int4 minimumreuse;		///< Can call getParserContext this many times, before a ParserContext is reused
@@ -125,7 +126,7 @@ class DisassemblyCache {
   void initialize(int4 min,int4 hashsize);	///< Initialize the hash-table of ParserContexts
   void free(void);		///< Free the hash-table of ParserContexts
 public:
-  DisassemblyCache(ContextCache *ccache,AddrSpace *cspace,int4 cachesize,int4 windowsize);	///< Constructor
+  DisassemblyCache(Translate *trans,ContextCache *ccache,AddrSpace *cspace,int4 cachesize,int4 windowsize);	///< Constructor
   ~DisassemblyCache(void) { free(); }	///< Destructor
   ParserContext *getParserContext(const Address &addr);		///< Get the parser for a particular Address
 };
@@ -218,14 +219,14 @@ public:
   tools for using such a specification to generate assembly
   and to generate \b pcode, a reverse engineering Register
   Transfer Language (RTL), from binary machine instructions.
-  
+
   SLEIGH was originally based on \b SLED, a
   \e Specification \e Language \e for \e Encoding \e and
   \e Decoding, designed by Norman Ramsey and Mary F. Fernandez,
   which performed disassembly (and assembly).  SLEIGH
   extends SLED by providing semantic descriptions (via the
   RTL) of machine instructions and other practical enhancements
-  for doing real world reverse engineering. 
+  for doing real world reverse engineering.
 
   SLEIGH is part of Project \b GHIDRA. It provides the core
   of the GHIDRA disassembler and the data-flow and
@@ -270,7 +271,7 @@ public:
 
     sleighexample.o:      sleighexample.cc
           $(CXX) -c $(DBG_CXXFLAGS) -o sleighexample sleighexample.o $(LNK)
-  
+
     clean:
           rm -rf *.o sleighexample
   \endcode
@@ -287,7 +288,7 @@ public:
   \b pcode can design to the SLEIGH API once, and then the
   application will automatically support any processor for
   which there is a specification.
-  
+
   For working with a single processor, the SLEIGH library
   needs to load a single \e compiled form of the processor
   specification, which is traditionally given a ".sla" suffix.
@@ -317,7 +318,7 @@ public:
     - \ref sleighpcodeemit
     - \ref sleighloadimage
     - \ref sleighcontext
-      
+
   \section sleightranslate Translate (or Sleigh)
 
   The core SLEIGH class is Sleigh, which is derived from the
@@ -532,6 +533,6 @@ public:
     context->setVariableDefault("opsize",1);    // Operand size is 32-bits
   \endcode
 
-  
+
  */
 #endif
