@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.16)
 project(mishegos_ghidra)
 
 # Pull in the CMake sleigh build support
+set(sleigh_BUILD_SLEIGHSPECS ON CACHE BOOL "" FORCE)
 add_subdirectory(sleigh-cmake EXCLUDE_FROM_ALL)
 
 add_library(mishegos_ghidra SHARED ghidra.cc sleighMishegos.cc)
