@@ -69,6 +69,7 @@ jobs:
           ruby \
           autotools-dev \
           autoconf \
+          llvm-dev \
           libtool
 
         sudo update-alternatives --install /usr/bin/python python /usr/bin/python2 1
