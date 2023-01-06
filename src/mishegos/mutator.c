@@ -1,8 +1,40 @@
-#include "mish_core.h"
+#include "mutator.h"
+
+#include "mish_common.h"
 
 #include <err.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+
+/* An x86 instruction's opcode is no longer than 3 bytes.
+ */
+typedef struct __attribute__((packed)) {
+  uint8_t len;
+  uint8_t op[3];
+} opcode;
+static_assert(sizeof(opcode) == 4, "opcode should be 4 bytes");
+
+/* An x86 instruction is no longer than 15 bytes,
+ * but the longest (potentially) structurally valid x86 instruction
+ * is 26 bytes:
+ *  4 byte legacy prefix
+ *  1 byte prefix
+ *  3 byte opcode
+ *  1 byte ModR/M
+ *  1 byte SIB
+ *  8 byte displacement
+ *  8 byte immediate
+ *
+ * We want to be able to "slide" around inside of a structurally valid
+ * instruction in order to find errors, so we give ourselves enough space
+ * here.
+ */
+typedef struct {
+  uint8_t off;
+  uint8_t len;
+  uint8_t insn[26];
+} insn_candidate;
 
 static uint64_t rng_state[4];
 static insn_candidate insn_cand;
@@ -52,6 +84,24 @@ static uint8_t rex_prefixes[] = {
     0b01001110, // WRX-
     0b01001111, // WRXB
 };
+
+#if defined __GLIBC__ && defined __linux__
+
+#include <sys/random.h>
+static int mish_getrandom(void *buf, size_t buflen, unsigned int flags) {
+  return getrandom(buf, buflen, flags);
+}
+
+#elif defined __APPLE__ && defined __MACH__
+
+#include <sys/random.h>
+static int mish_getrandom(void *buf, size_t buflen, unsigned int flags) {
+  return getentropy(buf, buflen);
+}
+
+#else
+#error "we only support linux + glibc at the moment; help us out!"
+#endif
 
 #ifndef NO_XOROSHIRO_RNG
 static inline uint64_t xoroshiro256_rotl(const uint64_t x, int k) {
@@ -318,6 +368,12 @@ static bool dummy_candidate(input_slot *slot) {
   return false;
 }
 
+static void hex2bytes(uint8_t *outbuf, const char *const input, size_t input_len) {
+  for (size_t i = 0, j = 0; j < input_len / 2; i += 2, ++j) {
+    outbuf[j] = (input[i] % 32 + 9) % 25 * 16 + (input[i + 1] % 32 + 9) % 25;
+  }
+}
+
 /* Manual: reads instruction candidates from stdin, one per line.
  * Candidates are expected to be in hex format, with no 0x or \x prefix.
  */
@@ -344,9 +400,7 @@ static bool manual_candidate(input_slot *slot) {
 
 mutator_t mutator_create(const char *name) {
   mish_getrandom(rng_state, sizeof(rng_state), 0);
-  // memcpy(rng_state, GET_CONFIG()->rng_seed, sizeof(rng_state));
-  // DLOG("rng seed:");
-  // hexputs((uint8_t *)rng_state, sizeof(rng_state));
+
   if (name == NULL) // default is sliding candidate
     return sliding_candidate;
   if (!strcmp(name, "dummy"))

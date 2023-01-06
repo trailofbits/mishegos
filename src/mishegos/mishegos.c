@@ -1,4 +1,6 @@
-#include "mish_core.h"
+
+#include "mish_common.h"
+#include "mutator.h"
 
 #include <assert.h>
 #include <dlfcn.h>
@@ -326,11 +328,5 @@ int main(int argc, char **argv) {
       idx = 0;
       gen++;
     }
-  }
-}
-
-void hex2bytes(uint8_t *outbuf, const char *const input, size_t input_len) {
-  for (size_t i = 0, j = 0; j < input_len / 2; i += 2, ++j) {
-    outbuf[j] = (input[i] % 32 + 9) % 25 * 16 + (input[i + 1] % 32 + 9) % 25;
   }
 }
