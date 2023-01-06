@@ -31,5 +31,9 @@ typedef struct {
   uint8_t insn[26];
 } insn_candidate;
 
-void mutator_init();
-bool candidate(input_slot *slot);
+/* Generate a single fuzzing candidate and populate the given input slot with it.
+ * Returns false if the configured mutation mode has been exhausted.
+ */
+typedef bool (*mutator_t)(input_slot *);
+
+mutator_t mutator_create(const char *name);

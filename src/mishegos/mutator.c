@@ -1,7 +1,10 @@
 #include "mish_core.h"
 
+#include <err.h>
+#include <stdio.h>
+#include <string.h>
+
 static uint64_t rng_state[4];
-static mutator_mode mut_mode;
 static insn_candidate insn_cand;
 
 /* An x86 instruction can have up to 4 legacy prefixes,
@@ -339,35 +342,22 @@ static bool manual_candidate(input_slot *slot) {
   return true;
 }
 
-void mutator_init() {
-  DLOG("initializing the mutation engine");
-  memcpy(rng_state, GET_CONFIG()->rng_seed, sizeof(rng_state));
-  DLOG("rng seed:");
-  hexputs((uint8_t *)rng_state, sizeof(rng_state));
-  mut_mode = GET_CONFIG()->mut_mode;
-}
-
-/* Generate a single fuzzing candidate and populate the given input slot with it.
- * Returns false if the configured mutation mode has been exhausted.
- */
-bool candidate(input_slot *slot) {
-  switch (mut_mode) {
-  case M_HAVOC: {
-    return havoc_candidate(slot);
-  }
-  case M_SLIDING: {
-    return sliding_candidate(slot);
-  }
-  case M_STRUCTURED: {
-    return structured_candidate(slot);
-  }
-  case M_DUMMY: {
-    return dummy_candidate(slot);
-  }
-  case M_MANUAL: {
-    return manual_candidate(slot);
-  }
-  }
-
-  __builtin_unreachable();
+mutator_t mutator_create(const char *name) {
+  mish_getrandom(rng_state, sizeof(rng_state), 0);
+  // memcpy(rng_state, GET_CONFIG()->rng_seed, sizeof(rng_state));
+  // DLOG("rng seed:");
+  // hexputs((uint8_t *)rng_state, sizeof(rng_state));
+  if (name == NULL) // default is sliding candidate
+    return sliding_candidate;
+  if (!strcmp(name, "dummy"))
+    return dummy_candidate;
+  else if (!strcmp(name, "sliding"))
+    return sliding_candidate;
+  else if (!strcmp(name, "structured"))
+    return structured_candidate;
+  else if (!strcmp(name, "havoc"))
+    return havoc_candidate;
+  else if (!strcmp(name, "manual"))
+    return manual_candidate;
+  errx(1, "invalid mutator: %s", name);
 }

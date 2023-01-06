@@ -1,7 +1,10 @@
+#include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include "mish_common.h"
 
 typedef struct m_string {
@@ -25,6 +28,24 @@ typedef struct cohort_results {
 
 static cohort_results results;
 static int m_finished_parsing;
+
+static const char *status2str(decode_status status) {
+  switch (status) {
+  case S_NONE:
+    return "none";
+  case S_SUCCESS:
+    return "success";
+  case S_FAILURE:
+    return "failure";
+  case S_CRASH:
+    return "crash";
+  case S_PARTIAL:
+    return "partial";
+  case S_UNKNOWN:
+  default:
+    return "unknown";
+  }
+}
 
 static void m_cohort_print_json(FILE *f, cohort_results *r) {
   fprintf(f, "{ \"nworkers\": %u, \"input\": \"%s\", \"outputs\": [", r->nworkers, r->input.string);
