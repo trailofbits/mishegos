@@ -13,7 +13,7 @@ zydis/build/libZydis.a:
 	cd zydis && \
 		mkdir build && \
 		cd build && \
-		cmake -DZYDIS_BUILD_TOOLS=OFF -DZYDIS_BUILD_EXAMPLES=OFF -DZYDIS_STATIC_DEFINE=ON .. && \
+		cmake -DZYDIS_BUILD_TOOLS=OFF -DZYDIS_BUILD_EXAMPLES=OFF -DZYDIS_STATIC_DEFINE=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo .. && \
 		cmake --build . -- -j4
 
 zydis.so: zydis.o
