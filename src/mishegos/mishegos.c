@@ -131,12 +131,23 @@ static void *worker(void *wc_vp) {
     if (mish_atomic_fetch_add(&input_chunks[idx].remaining_workers, -1) == 1)
       mish_atomic_notify(&input_chunks[idx].remaining_workers);
 
+    /* Not getting a full chunk indicates that we are exiting. */
+    if (input_chunks[idx].input_count != MISHEGOS_NUM_SLOTS_PER_CHUNK)
+      break;
+
     idx++;
     if (idx == MISHEGOS_NUM_CHUNKS) {
       idx = 0;
       gen++;
     }
   }
+
+  if (worker_dtor != NULL) {
+    worker_dtor();
+  }
+  dlclose(so);
+
+  return NULL;
 }
 
 /* By default, filter all inputs which all decoders identify as invalid. */
