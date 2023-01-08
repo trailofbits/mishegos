@@ -226,10 +226,12 @@ static int worker_for_pid(pid_t pid) {
   return -1;
 }
 
-static bool fork_mode = false;
+static bool thread_mode = false;
 
 static void worker_start(struct worker_config *wc) {
-  if (fork_mode) {
+  if (thread_mode) {
+    pthread_create(&wc->thread, NULL, worker, wc);
+  } else {
     /* pipe to notify child that we are ready. */
     int pipe_fds[2];
     char tmp = 0;
@@ -257,8 +259,6 @@ static void worker_start(struct worker_config *wc) {
     close(pipe_fds[0]);
     write(pipe_fds[1], &tmp, 1);
     close(pipe_fds[1]);
-  } else {
-    pthread_create(&wc->thread, NULL, worker, wc);
   }
 }
 
@@ -305,10 +305,10 @@ int main(int argc, char **argv) {
   const char *mutator_name = NULL;
 
   int opt;
-  while ((opt = getopt(argc, argv, "hfm:s:n")) != -1) {
+  while ((opt = getopt(argc, argv, "htm:s:n")) != -1) {
     switch (opt) {
-    case 'f':
-      fork_mode = true;
+    case 't':
+      thread_mode = false;
       break;
     case 'm':
       mutator_name = optarg;
@@ -328,8 +328,8 @@ int main(int argc, char **argv) {
       break;
     case 'h':
     default:
-      fprintf(stderr, "usage: %s [-f] [-m mutator] [-s min[:max]] [-n]\n", argv[0]);
-      fprintf(stderr, "  -f: use fork mode\n");
+      fprintf(stderr, "usage: %s [-t] [-m mutator] [-s min[:max]] [-n]\n", argv[0]);
+      fprintf(stderr, "  -t: use thread mode\n");
       fprintf(stderr, "  -m: specify mutator\n");
       fprintf(stderr, "  -s: keep samples where success count is in range; default is 1:-1\n");
       fprintf(stderr, "      (0 = all; 1 = #success >= 1; -1 = #success = nworkers - 1;\n");
@@ -345,7 +345,7 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  if (fork_mode) {
+  if (!thread_mode) {
     struct sigaction sigchld_action = {0};
     sigchld_action.sa_handler = sigchld_handler;
     sigchld_action.sa_flags = SA_NOCLDSTOP;
@@ -405,11 +405,12 @@ int main(int argc, char **argv) {
   }
   fprintf(stderr, "filter min=%d max=%d\n", filter_min_success, filter_max_success);
 
+  uint64_t total = 0;
   uint64_t exit_idx = MISHEGOS_NUM_CHUNKS;
   while (true) {
     mish_atomic_wait_for(&input_chunks[idx].remaining_workers, 0);
 
-    if (fork_mode) {
+    if (!thread_mode) {
       bool worker_restarted = false;
       for (int i = 0; i < nworkers; i++) {
         if (workers[i].sigchld) {
