@@ -19,6 +19,7 @@
 #include <sys/prctl.h>
 #include <sys/random.h>
 #include <sys/syscall.h>
+#include <sys/wait.h>
 #include <linux/futex.h>
 
 #define WITH_FUTEX
@@ -52,6 +53,10 @@ static uint32_t mish_atomic_fetch_add(mish_atomic_uint *var, uint32_t val) {
   return atomic_fetch_add(&var->val, val);
 }
 
+static uint32_t mish_atomic_load(mish_atomic_uint *var) {
+  return atomic_load(&var->val);
+}
+
 static void mish_atomic_store(mish_atomic_uint *var, uint32_t val) {
   atomic_store(&var->val, val);
 }
@@ -74,6 +79,7 @@ typedef struct {
 } input_chunk;
 
 typedef struct {
+  mish_atomic_uint remaining;
   output_slot outputs[MISHEGOS_NUM_SLOTS_PER_CHUNK];
 } output_chunk;
 
@@ -83,8 +89,14 @@ struct worker_config {
   int workerno;
   input_chunk *input_chunks;
   output_chunk *output_chunks;
+  size_t start_gen;
+  size_t start_idx;
+  bool sigchld;
   pthread_t thread;
+  pid_t pid;
 };
+
+static struct worker_config workers[MISHEGOS_MAX_NWORKERS];
 
 static void *alloc_shared(size_t size) {
   void *res = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON | MAP_POPULATE, -1, 0);
@@ -113,19 +125,28 @@ static void *worker(void *wc_vp) {
     worker_ctor();
   }
 
-  uint32_t gen = 1;
-  size_t idx = 0;
+  uint32_t gen = wc->start_gen;
+  size_t idx = wc->start_idx;
 
   input_chunk *input_chunks = wc->input_chunks;
   output_chunk *output_chunks = wc->output_chunks;
   while (1) {
     mish_atomic_wait_for(&input_chunks[idx].generation, gen);
 
-    for (size_t i = 0; i < input_chunks[idx].input_count; i++) {
+    /* Track remaining slots; if we crash, we know where we are. If we start
+     * with a non-zero remaining count, we continue where we left, but skip the
+     * slot that caused us to crash. */
+    size_t old_remaining = mish_atomic_load(&output_chunks[idx].remaining);
+    size_t start = old_remaining == 0 ? 0 : input_chunks[idx].input_count - old_remaining + 1;
+    mish_atomic_store(&output_chunks[idx].remaining, input_chunks[idx].input_count - start);
+    for (size_t i = start; i < input_chunks[idx].input_count; i++) {
       output_chunks[idx].outputs[i].len = 0;
       output_chunks[idx].outputs[i].ndecoded = 0;
       try_decode(&output_chunks[idx].outputs[i], input_chunks[idx].inputs[i].raw_insn,
                  input_chunks[idx].inputs[i].len);
+      /* Note: this is no atomic subtraction. It atomic, however, to ensure that
+       * the decode result is written to memory before we decrement the counter */
+      mish_atomic_store(&output_chunks[idx].remaining, input_chunks[idx].input_count - i - 1);
     }
 
     if (mish_atomic_fetch_add(&input_chunks[idx].remaining_workers, -1) == 1)
@@ -193,10 +214,94 @@ keep:;
     fwrite(&output->len, sizeof(output->len), 1, stdout);
     fwrite(output->result, 1, output->len, stdout);
   }
+  fflush(stdout);
+}
+
+static int worker_for_pid(pid_t pid) {
+  for (int i = 0; i < MISHEGOS_MAX_NWORKERS; i++) {
+    if (workers[i].pid == pid) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+static bool fork_mode = false;
+
+static void worker_start(struct worker_config *wc) {
+  if (fork_mode) {
+    /* pipe to notify child that we are ready. */
+    int pipe_fds[2];
+    char tmp = 0;
+    if (pipe(pipe_fds) < 0) {
+      perror("pipe");
+      exit(1);
+    }
+
+    pid_t child = fork();
+    if (child < 0) {
+      perror("fork");
+      exit(1);
+    } else if (child == 0) {
+      prctl(PR_SET_PDEATHSIG, SIGHUP);
+      close(pipe_fds[1]);
+      if (read(pipe_fds[0], &tmp, 1) != 1) {
+        /* parent died without us being killed by SIGHUP -- so exit. */
+        exit(1);
+      }
+      close(pipe_fds[0]);
+      worker(wc);
+      exit(0);
+    }
+    wc->pid = child;
+    close(pipe_fds[0]);
+    write(pipe_fds[1], &tmp, 1);
+    close(pipe_fds[1]);
+  } else {
+    pthread_create(&wc->thread, NULL, worker, wc);
+  }
+}
+
+static void sigchld_handler(int sig) {
+  (void)sig;
+
+  /* Multiple children might have died at the same time, but we get only one signal. */
+  int wstatus;
+  pid_t wpid;
+  while ((wpid = waitpid(-1, &wstatus, WNOHANG)) > 0) {
+    int workerno = worker_for_pid(wpid);
+    assert(workerno >= 0);
+    if (workerno < 0) {
+      /* worker died before we even had the chance to store its pid. */
+      abort();
+    }
+    input_chunk *ic = workers[workerno].input_chunks;
+    output_chunk *oc = workers[workerno].output_chunks;
+    for (size_t widx = 0; widx < MISHEGOS_NUM_CHUNKS; widx++) {
+      uint32_t remaining = mish_atomic_load(&oc[widx].remaining);
+      if (remaining == 0)
+        continue;
+      /* we found the position where the worker crashed. */
+      oc[widx].outputs[ic[widx].input_count - remaining].status = S_CRASH;
+      /* update generation and chunk index so that worker can restart. */
+      workers[workerno].start_gen = mish_atomic_load(&ic[widx].generation);
+      workers[workerno].start_idx = widx;
+      /* Mark worker as sigchld-received s.t. we can restart them. We obviously
+       * can't do that in a signal handler. */
+      workers[workerno].sigchld = true;
+      /* Reduce remaining_workers temporarily s.t. we always wake up. No need to
+       * explicitly wake, however: the futex syscall will be restarted and
+       * detect that the value changed */
+      mish_atomic_fetch_add(&ic[widx].remaining_workers, -1);
+      break;
+    }
+    /* We might get here because the worker terminated ordinarily -- ignore.
+     * There's also the case that the worker crashed outside decoding. This must
+     * be a bug and therefore should never happen(TM). Ignore this case, too. */
+  }
 }
 
 int main(int argc, char **argv) {
-  bool fork_mode = false;
   const char *mutator_name = NULL;
 
   int opt;
@@ -240,6 +345,16 @@ int main(int argc, char **argv) {
     return 1;
   }
 
+  if (fork_mode) {
+    struct sigaction sigchld_action = {0};
+    sigchld_action.sa_handler = sigchld_handler;
+    sigchld_action.sa_flags = SA_NOCLDSTOP;
+    if (sigaction(SIGCHLD, &sigchld_action, NULL)) {
+      perror("sigaction");
+      return 1;
+    }
+  }
+
   mutator_t mutator = mutator_create(mutator_name);
 
   FILE *file = fopen(argv[optind], "r");
@@ -250,8 +365,9 @@ int main(int argc, char **argv) {
 
   input_chunk *input_chunks = alloc_shared(sizeof(input_chunk) * MISHEGOS_NUM_CHUNKS);
 
-  struct worker_config workers[MISHEGOS_MAX_NWORKERS];
   int nworkers = 0;
+  uint64_t gen = 1;
+  uint64_t idx = 0;
 
   while (nworkers < MISHEGOS_MAX_NWORKERS) {
     size_t size = 0;
@@ -275,19 +391,9 @@ int main(int argc, char **argv) {
     workers[nworkers].workerno = nworkers;
     workers[nworkers].input_chunks = input_chunks;
     workers[nworkers].output_chunks = alloc_shared(sizeof(output_chunk) * MISHEGOS_NUM_CHUNKS);
-    if (fork_mode) {
-      pid_t child = fork();
-      if (child < 0) {
-        perror("fork");
-        exit(1);
-      } else if (child == 0) {
-        prctl(PR_SET_PDEATHSIG, SIGHUP);
-        worker(&workers[nworkers]);
-        exit(0);
-      }
-    } else {
-      pthread_create(&workers[nworkers].thread, NULL, worker, &workers[nworkers]);
-    }
+    workers[nworkers].start_gen = gen;
+    workers[nworkers].start_idx = idx;
+    worker_start(&workers[nworkers]);
     nworkers++;
   }
 
@@ -299,11 +405,26 @@ int main(int argc, char **argv) {
   }
   fprintf(stderr, "filter min=%d max=%d\n", filter_min_success, filter_max_success);
 
-  uint64_t gen = 1;
-  uint64_t idx = 0;
   uint64_t exit_idx = MISHEGOS_NUM_CHUNKS;
   while (true) {
     mish_atomic_wait_for(&input_chunks[idx].remaining_workers, 0);
+
+    if (fork_mode) {
+      bool worker_restarted = false;
+      for (int i = 0; i < nworkers; i++) {
+        if (workers[i].sigchld) {
+          /* undo hack to forcefully wake us up. */
+          mish_atomic_fetch_add(&input_chunks[workers[i].start_idx].remaining_workers, 1);
+          workers[i].sigchld = false;
+          worker_start(&workers[i]);
+          worker_restarted = true;
+        }
+      }
+      if (worker_restarted) {
+        /* if we restarted a worker for current idx, wait for it again. */
+        continue;
+      }
+    }
 
     if (gen > 1) {
       for (size_t i = 0; i < input_chunks[idx].input_count; i++) {
