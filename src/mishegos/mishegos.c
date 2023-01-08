@@ -9,6 +9,7 @@
 #include <limits.h>
 #include <stdatomic.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -198,23 +199,19 @@ static void process(size_t slot, size_t idx, input_chunk *input_chunks, int nwor
   return;
 
 keep:;
-  input_slot *input = &input_chunks[slot].inputs[idx];
   fwrite(&nworkers, sizeof(nworkers), 1, stdout);
-  uint64_t len = input->len * 2;
-  fwrite(&len, sizeof(len), 1, stdout);
-  for (size_t i = 0; i < input->len; i++)
-    fprintf(stdout, "%02x", input->raw_insn[i]);
+
+  input_slot *input = &input_chunks[slot].inputs[idx];
+  fwrite(input, sizeof(*input), 1, stdout);
   for (int j = 0; j < nworkers; j++) {
-    output_slot *output = &workers[j].output_chunks[slot].outputs[idx];
-    fwrite(&output->status, sizeof(output->status), 1, stdout);
-    fwrite(&output->ndecoded, sizeof(output->ndecoded), 1, stdout);
-    fwrite(&j, sizeof(j), 1, stdout);
     fwrite(&workers[j].soname_len, sizeof(workers[j].soname_len), 1, stdout);
     fwrite(workers[j].soname, 1, workers[j].soname_len, stdout);
-    fwrite(&output->len, sizeof(output->len), 1, stdout);
-    fwrite(output->result, 1, output->len, stdout);
+
+    output_slot *output = &workers[j].output_chunks[slot].outputs[idx];
+    static_assert(offsetof(output_slot, result) == sizeof(output_slot) - MISHEGOS_DEC_MAXLEN,
+                  "expect result buffer to be at end of slot");
+    fwrite(output, sizeof(*output) - MISHEGOS_DEC_MAXLEN + output->len, 1, stdout);
   }
-  fflush(stdout);
 }
 
 static int worker_for_pid(pid_t pid) {

@@ -22,7 +22,7 @@ typedef struct worker_output {
 
 typedef struct cohort_results {
   uint32_t nworkers;
-  m_string input;
+  input_slot input;
   worker_output *outputs;
 } cohort_results;
 
@@ -48,7 +48,13 @@ static const char *status2str(decode_status status) {
 }
 
 static void m_cohort_print_json(FILE *f, cohort_results *r) {
-  fprintf(f, "{ \"nworkers\": %u, \"input\": \"%s\", \"outputs\": [", r->nworkers, r->input.string);
+  char hexbuf[MISHEGOS_INSN_MAXLEN * 2 + 1];
+  for (size_t i = 0; i < r->input.len; i++) {
+    hexbuf[i * 2] = "0123456789abcdef"[r->input.raw_insn[i] / 0x10];
+    hexbuf[i * 2 + 1] = "0123456789abcdef"[r->input.raw_insn[i] % 0x10];
+  }
+  hexbuf[r->input.len * 2] = '\0';
+  fprintf(f, "{ \"nworkers\": %u, \"input\": \"%s\", \"outputs\": [", r->nworkers, hexbuf);
   for (int i = 0; i < r->nworkers; i++) {
     if (i != 0) {
       fprintf(f, ",");
@@ -112,14 +118,13 @@ static void read_string(FILE *file, m_string *s, int len_size) {
 static int read_next(FILE *file) {
   fread(&results.nworkers, sizeof(uint32_t), 1, file);
   results.outputs = malloc(sizeof(worker_output) * results.nworkers);
-  read_string(file, &results.input, 8);
+  m_fread(&results.input, sizeof(results.input), 1, file);
 
   for (int i = 0; i < results.nworkers; i++) {
+    read_string(file, &results.outputs[i].workerso, 8);
     m_fread(&results.outputs[i].status, sizeof(uint32_t), 1, file);
     m_fread(&results.outputs[i].ndecoded, sizeof(uint16_t), 1, file);
-    m_fread(&results.outputs[i].workerno, sizeof(uint32_t), 1, file);
 
-    read_string(file, &results.outputs[i].workerso, 8);
     read_string(file, &results.outputs[i].result, 2);
   }
 
@@ -127,7 +132,6 @@ static int read_next(FILE *file) {
 }
 
 static void free_cohort_results(cohort_results *result) {
-  free(results.input.string);
   for (int i = 0; i < results.nworkers; i++) {
     free(results.outputs[i].workerso.string);
     free(results.outputs[i].result.string);

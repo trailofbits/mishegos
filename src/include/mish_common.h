@@ -16,7 +16,7 @@
 #include <stdint.h>
 
 #define MISHEGOS_INSN_MAXLEN 15
-#define MISHEGOS_DEC_MAXLEN 1018
+#define MISHEGOS_DEC_MAXLEN 248
 // This limit is rather arbitrary at the moment.
 #define MISHEGOS_MAX_NWORKERS 31
 
@@ -39,12 +39,9 @@ typedef struct {
 } input_slot;
 
 typedef struct __attribute__((packed)) {
-  input_slot input;
-  char pad[4];
   decode_status status;
+  uint16_t ndecoded;
   uint16_t len;
   char result[MISHEGOS_DEC_MAXLEN];
-  uint16_t ndecoded;
-  uint32_t workerno;
 } output_slot;
-static_assert(sizeof(output_slot) == 1050, "output_slot should be 1050 bytes");
+static_assert(sizeof(output_slot) == 256, "output_slot should be 256 bytes");
