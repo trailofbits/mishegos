@@ -2,6 +2,10 @@
 
 #include "mish_common.h"
 
+/* frequently needed by workers. */
+#include <err.h>
+#include <string.h>
+
 /* This is fine for now. */
 typedef output_slot decode_result;
 

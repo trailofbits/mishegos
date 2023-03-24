@@ -37,12 +37,12 @@ jobs:
 
     - name: Docker Smoketest
       run: |
-        docker run --rm mishegos bash -eo pipefail -c 'M=1 ./src/mishegos/mishegos ./workers.spec <<< "90" | ./src/mish2jsonl/mish2jsonl'
+        docker run --rm mishegos bash -eo pipefail -c './src/mishegos/mishegos -m manual ./workers.spec <<< "90" | ./src/mish2jsonl/mish2jsonl'
 
     - name: Docker Test Fuzz
       run: |
         docker run --rm mishegos bash -eo pipefail -c \
-          'timeout --preserve-status 5s ./src/mishegos/mishegos ./workers.spec | ./src/mish2jsonl/mish2jsonl | tail'
+          '(timeout --preserve-status 5s ./src/mishegos/mishegos -s 0 ./workers.spec || true) | ./src/mish2jsonl/mish2jsonl | tail'
 
   build:
     runs-on: ubuntu-latest
@@ -81,9 +81,9 @@ jobs:
       # Disassemble NOP
       run: |
         set -eo pipefail
-        M=1 ./src/mishegos/mishegos ./workers.spec <<< "90" | ./src/mish2jsonl/mish2jsonl
+        ./src/mishegos/mishegos -m manual ./workers.spec <<< "90" | ./src/mish2jsonl/mish2jsonl
 
     - name: Test Fuzz
       run: |
         set -eo pipefail
-        timeout --preserve-status 5s ./src/mishegos/mishegos ./workers.spec | ./src/mish2jsonl/mish2jsonl | tail
+        (timeout --preserve-status 5s ./src/mishegos/mishegos -s 0 ./workers.spec || true) | ./src/mish2jsonl/mish2jsonl | tail
