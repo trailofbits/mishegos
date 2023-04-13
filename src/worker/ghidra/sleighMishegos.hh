@@ -33,6 +33,8 @@
 
 #include <sleigh/sleighbase.hh>
 
+namespace ghidra {
+
 class LoadImage;
 
 /// \brief Class for describing a relative p-code branch destination
@@ -193,6 +195,8 @@ public:
   virtual int4 oneInstruction(PcodeEmit &emit,const Address &baseaddr) const;
   virtual int4 printAssembly(AssemblyEmit &emit,const Address &baseaddr) const;
 };
+
+} // End namespace ghidra
 
 /** \page sleigh SLEIGH
 

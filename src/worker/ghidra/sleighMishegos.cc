@@ -28,6 +28,8 @@
 #include "sleighMishegos.hh"
 #include <sleigh/loadimage.hh>
 
+namespace ghidra {
+
 PcodeCacher::PcodeCacher(void)
 
 {
@@ -816,3 +818,5 @@ void SleighMishegos::allowContextSet(bool val) const
 {
   cache->allowSet(val);
 }
+
+} // End namespace ghidra

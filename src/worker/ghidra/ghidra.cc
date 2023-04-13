@@ -16,6 +16,8 @@
 #include "../worker.h"
 #include "mish_common.h"
 
+using namespace ghidra;
+
 extern "C" {
 const char *worker_name = (const char *)"ghidra";
 
