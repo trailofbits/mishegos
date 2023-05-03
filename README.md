@@ -1,7 +1,7 @@
 mishegos
 ========
 
-[![Build Status](https://img.shields.io/github/workflow/status/trailofbits/mishegos/CI/master)](https://github.com/trailofbits/mishegos/actions?query=workflow%3ACI)
+[![CI](https://github.com/trailofbits/mishegos/actions/workflows/ci.yml/badge.svg)](https://github.com/trailofbits/mishegos/actions/workflows/ci.yml)
 
 A differential fuzzer for x86 decoders.
 
