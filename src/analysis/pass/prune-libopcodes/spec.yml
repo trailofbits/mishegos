@@ -1,0 +1,3 @@
+name: prune-libopcodes
+desc: Remove all libopcodes (BFD) results
+run: prune-libopcodes
