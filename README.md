@@ -8,8 +8,8 @@ A differential fuzzer for x86 decoders.
 ![mishegos](https://user-images.githubusercontent.com/3059210/59005797-da89b400-87ec-11e9-8274-321edfa6df45.png)
 
 Read more about `mishegos` in its accompanying [blog post](https://blog.trailofbits.com/2019/10/31/destroying-x86_64-instruction-decoders-with-differential-fuzzing/)
-and academic publication ([paper](https://github.com/gangtan/LangSec-papers-and-slides/raw/main/langsec21/papers/Woodruff_LangSec21.pdf) 
-| [recording](https://www.youtube.com/watch?v=a2q86KTZt0g) 
+and academic publication ([paper](https://github.com/gangtan/LangSec-papers-and-slides/raw/main/langsec21/papers/Woodruff_LangSec21.pdf)
+| [recording](https://www.youtube.com/watch?v=a2q86KTZt0g)
 | [slides](https://github.com/trailofbits/publications/blob/master/presentations/Differential%20analysis%20of%20x86-64%20decoders/langsec-2021-slides.pdf)).
 
 ```bibtex
@@ -46,6 +46,12 @@ Make sure you have `binutils-dev` (or however your system provides `libopcodes`)
 make
 # or
 make debug
+```
+
+Build specific workers by passing a space-delimited list as the `WORKERS` varable:
+
+```bash
+WORKERS="bfd capstone" make worker
 ```
 
 ### Running

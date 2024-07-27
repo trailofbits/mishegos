@@ -73,7 +73,7 @@ mishegos:
 
 .PHONY: worker
 worker:
-	$(MAKE) -C src/worker
+	$(MAKE) -C src/worker $(WORKERS)
 
 .PHONY: mish2jsonl
 mish2jsonl:
