@@ -38,6 +38,15 @@ git clone --recurse-submodules https://github.com/trailofbits/mishegos
 docker build -t mishegos .
 ```
 
+To run the fuzzer inside Docker:
+
+```bash
+mkdir -p ./workspace
+docker run --rm -v ./workspace:/workspace mishegos bash -c \
+  'timeout 5s ./src/mishegos/mishegos ./workers.spec > /workspace/out.bin; \
+   ./src/mish2jsonl/mish2jsonl /workspace/out.bin > /workspace/out.jsonl'
+```
+
 Alternatively, you can try building it directly.
 
 Make sure you have `binutils-dev` (or however your system provides `libopcodes`) installed:
