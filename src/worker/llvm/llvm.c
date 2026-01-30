@@ -18,9 +18,9 @@ void worker_ctor() {
   }
   // Hex immediates and Intel syntax
   // The first option doesn't seem to have an effect, though.
-  if (!LLVMSetDisasmOptions(dis, LLVMDisassembler_Option_PrintImmHex |
-                                     LLVMDisassembler_Option_AsmPrinterVariant))
-    errx(1, "LLVMSetDisasmOptions");
+  // Don't fail if options aren't supported on this LLVM version.
+  LLVMSetDisasmOptions(dis, LLVMDisassembler_Option_PrintImmHex |
+                            LLVMDisassembler_Option_AsmPrinterVariant);
 }
 
 void worker_dtor() {

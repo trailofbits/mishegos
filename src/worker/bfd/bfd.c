@@ -38,6 +38,26 @@ static int dis_fprintf(void *_stream, const char *fmt, ...) {
   return 0;
 }
 
+#ifdef HAVE_BINUTILS_STYLED
+/* binutils 2.39+ added a fourth argument to init_disassemble_info() for styled output.
+ * This callback ignores the style and delegates to the regular fprintf function.
+ */
+static int dis_fprintf_styled(void *_stream, enum disassembler_style style, const char *fmt, ...) {
+  (void)style;
+  assert(disasm_off <= MISHEGOS_DEC_MAXLEN && "disassembly buffer overrun?");
+
+  size_t remaining_size = MISHEGOS_DEC_MAXLEN - disasm_off;
+  assert(remaining_size > 0);
+
+  va_list arg;
+  va_start(arg, fmt);
+  size_t bytes_written = vsnprintf(disasm_buf + disasm_off, remaining_size, fmt, arg);
+  disasm_off += bytes_written;
+  va_end(arg);
+  return 0;
+}
+#endif
+
 static void init_dis() {
   disasm = disassembler(bfd_arch_i386, false, bfd_mach_x86_64, NULL);
   if (disasm == NULL) {
@@ -57,7 +77,11 @@ void try_decode(decode_result *result, uint8_t *raw_insn, uint8_t length) {
    * because I ran into problems with the original memfd implementation.
    * Worth re-trying later.
    */
+#ifdef HAVE_BINUTILS_STYLED
+  init_disassemble_info(&disasm_info, NULL, dis_fprintf, dis_fprintf_styled);
+#else
   init_disassemble_info(&disasm_info, NULL, dis_fprintf);
+#endif
   disasm_info.disassembler_options = "intel-mnemonic";
   disasm_info.arch = bfd_arch_i386;
   disasm_info.mach = bfd_mach_x86_64;

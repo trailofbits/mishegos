@@ -1,7 +1,7 @@
 # ==============================================================================
 # Stage 1: deps - Build dependencies base image
 # ==============================================================================
-FROM ubuntu:20.04 AS deps
+FROM ubuntu:24.04 AS deps
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -10,13 +10,12 @@ RUN apt-get update && \
         gpg wget ca-certificates curl && \
     wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | \
         gpg --dearmor - | tee /usr/share/keyrings/kitware-archive-keyring.gpg >/dev/null && \
-    echo 'deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ focal main' | \
+    echo 'deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ noble main' | \
         tee /etc/apt/sources.list.d/kitware.list >/dev/null && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
         build-essential \
         binutils-dev \
-        python \
         python3 \
         cmake \
         meson \
@@ -69,7 +68,7 @@ RUN mkdir -p /artifacts/src/mishegos /artifacts/src/mish2jsonl /artifacts/worker
 # ==============================================================================
 # Stage 3: deploy - Minimal runtime image
 # ==============================================================================
-FROM ubuntu:20.04 AS deploy
+FROM ubuntu:24.04 AS deploy
 
 ENV DEBIAN_FRONTEND=noninteractive
 
