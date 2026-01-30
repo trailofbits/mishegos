@@ -18,49 +18,25 @@ make clean        # Clean build artifacts
 
 # Build specific workers only
 WORKERS="bfd capstone" make worker
+
+# Full parallel build
+make clean all -j$(nproc)
 ```
-
-**Docker development (recommended for fast iteration):**
-```bash
-# Build the deps image once (includes all build tools, ~1.8GB)
-docker build --target deps -t mishegos:deps .
-
-# Mount source and build - supports incremental builds
-docker run --rm -v $(pwd):/app/mishegos mishegos:deps make clean all -j $(nproc)
-
-# Run smoketest with mounted source
-docker run --rm -v $(pwd):/app/mishegos mishegos:deps bash -c \
-  'echo -n "90" | ./src/mishegos/mishegos -m manual ./workers.spec | ./src/mish2jsonl/mish2jsonl'
-
-# Run fuzz test with mounted source
-docker run --rm -v $(pwd):/app/mishegos mishegos:deps bash -c \
-  'timeout 5s ./src/mishegos/mishegos ./workers.spec > /tmp/out.bin; \
-   ./src/mish2jsonl/mish2jsonl /tmp/out.bin | head -5'
-```
-
-**Docker production build:**
-```bash
-# Build minimal deploy image (~270MB, no build tools)
-docker build -t mishegos .
-
-# Run fuzz test
-mkdir -p ./workspace
-docker run --rm -v ./workspace:/workspace mishegos bash -c \
-  'timeout 5s ./src/mishegos/mishegos ./workers.spec > /workspace/out.bin; \
-   ./src/mish2jsonl/mish2jsonl /workspace/out.bin > /workspace/out.jsonl'
-```
-
-The Dockerfile uses three stages: `deps` (build tools), `build` (compilation), `deploy` (minimal runtime).
 
 ## Running the Fuzzer
 
 ```bash
+# Smoketest - decode NOP instruction
+echo -n "90" | ./src/mishegos/mishegos -m manual ./workers.spec | ./src/mish2jsonl/mish2jsonl
+
+# Short fuzz test - run for 5 seconds
+timeout 5s ./src/mishegos/mishegos ./workers.spec > /tmp/out.bin
+./src/mish2jsonl/mish2jsonl /tmp/out.bin | head -5
+
+# Continuous fuzzing
 ./src/mishegos/mishegos ./workers.spec > /tmp/mishegos
 V=1 ./src/mishegos/mishegos ./workers.spec    # Verbose mode
 MODE=havoc ./src/mishegos/mishegos ./workers.spec  # Havoc mutation mode
-
-# Manual mode - decode specific hex input (useful for testing)
-echo -n "90" | ./src/mishegos/mishegos -m manual ./workers.spec | ./src/mish2jsonl/mish2jsonl
 ```
 
 Mutation modes: `sliding` (default), `havoc`, `structured`

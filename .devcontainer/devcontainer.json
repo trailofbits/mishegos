@@ -1,0 +1,28 @@
+{
+  "name": "Mishegos Dev",
+  "build": {
+    "dockerfile": "../Dockerfile",
+    "target": "devcontainer",
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+      },
+      "extensions": [
+        "llvm-vs-code-extensions.vscode-clangd",
+        "EditorConfig.EditorConfig",
+      ]
+    }
+  },
+  "mounts": [
+    "source=mishegos-commandhistory-${devcontainerId},target=/commandhistory,type=volume",
+    "source=mishegos-cargo-cache-${devcontainerId},target=/home/vscode/.cargo/registry,type=volume"
+  ],
+  "workspaceFolder": "/workspace",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+  "remoteUser": "vscode",
+  "postStartCommand": "sudo chown -R vscode:vscode /home/vscode/.cargo/registry && git config --global --add safe.directory ${containerWorkspaceFolder}",
+}

@@ -38,6 +38,8 @@ git clone --recurse-submodules https://github.com/trailofbits/mishegos
 docker build -t mishegos .
 ```
 
+For VS Code users, a devcontainer configuration is available with all build tools.
+
 To run the fuzzer inside Docker:
 
 ```bash
