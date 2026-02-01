@@ -118,7 +118,7 @@ static void *worker(void *wc_vp) {
 
   void (*worker_ctor)() = (void (*)())dlsym(so, "worker_ctor");
   void (*worker_dtor)() = (void (*)())dlsym(so, "worker_dtor");
-  typedef void (*try_decode_t)(output_slot * result, uint8_t * raw_insn, uint8_t length);
+  typedef void (*try_decode_t)(output_slot *result, uint8_t *raw_insn, uint8_t length);
   try_decode_t try_decode = (try_decode_t)dlsym(so, "try_decode");
   char *worker_name = *((char **)dlsym(so, "worker_name"));
 
