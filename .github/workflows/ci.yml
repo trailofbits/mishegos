@@ -54,7 +54,6 @@ jobs:
         sudo apt-get install -y \
           build-essential \
           binutils-dev \
-          python2 \
           python3 \
           cmake \
           meson \
@@ -63,8 +62,6 @@ jobs:
           autoconf \
           llvm-dev \
           libtool
-
-        sudo update-alternatives --install /usr/bin/python python /usr/bin/python2 1
 
     - name: Build
       run: make -j$(nproc)
