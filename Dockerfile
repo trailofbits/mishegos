@@ -46,7 +46,35 @@ RUN mkdir -p ~/artifacts/src/mishegos ~/artifacts/src/mish2jsonl ~/artifacts/wor
     sed -i 's|^\./src/worker/[^/]*/|./workers/|g' ~/artifacts/workers.spec
 
 # ==============================================================================
-# Stage 3: deploy - Minimal runtime image
+# Stage 3: devcontainer - Development environment for VS Code
+# ==============================================================================
+FROM mcr.microsoft.com/devcontainers/base:ubuntu-24.04 AS devcontainer
+
+ENV DEVCONTAINER=true
+
+COPY scripts/docker/install_dev_deps.sh /tmp/install_dev_deps.sh
+RUN bash /tmp/install_dev_deps.sh
+
+# Mounts and config for persisting sessions across container rebuilds
+RUN SNIPPET="export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.bash_history" \
+    && mkdir /commandhistory \
+    && touch /commandhistory/.bash_history \
+    && chown -R vscode /commandhistory \
+    && echo "$SNIPPET" >> "/home/vscode/.bashrc"
+
+USER vscode
+WORKDIR /home/vscode
+
+# Install user tools
+COPY scripts/docker/install_rust.sh /tmp/install_rust.sh
+RUN bash /tmp/install_rust.sh
+
+ENV PATH="/home/vscode/.cargo/bin:${PATH}"
+
+WORKDIR /workspace
+
+# ==============================================================================
+# Stage 4: deploy - Minimal runtime image
 # ==============================================================================
 FROM ubuntu:24.04 AS deploy
 
