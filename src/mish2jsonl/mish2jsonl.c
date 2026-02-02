@@ -47,6 +47,65 @@ static const char *status2str(decode_status status) {
   }
 }
 
+// Escape a string for JSON output per RFC 7159.
+// Returns a newly allocated string that must be freed by caller.
+static char *json_escape_string(const char *input) {
+  if (input == NULL) {
+    return NULL;
+  }
+
+  size_t input_len = strlen(input);
+  size_t max_output_len = input_len * 6 + 1; // Worst case: \uXXXX per char
+  char *output = malloc(max_output_len);
+  if (output == NULL) {
+    return NULL;
+  }
+
+  char *out = output;
+  for (const char *in = input; *in != '\0'; in++) {
+    unsigned char c = (unsigned char)*in;
+    switch (c) {
+    case '"':
+      *out++ = '\\';
+      *out++ = '"';
+      break;
+    case '\\':
+      *out++ = '\\';
+      *out++ = '\\';
+      break;
+    case '\n':
+      *out++ = '\\';
+      *out++ = 'n';
+      break;
+    case '\r':
+      *out++ = '\\';
+      *out++ = 'r';
+      break;
+    case '\t':
+      *out++ = '\\';
+      *out++ = 't';
+      break;
+    case '\b':
+      *out++ = '\\';
+      *out++ = 'b';
+      break;
+    case '\f':
+      *out++ = '\\';
+      *out++ = 'f';
+      break;
+    default:
+      if (c < 0x20) {
+        out += sprintf(out, "\\u%04x", c);
+      } else {
+        *out++ = c;
+      }
+      break;
+    }
+  }
+  *out = '\0';
+  return output;
+}
+
 static void m_cohort_print_json(FILE *f, cohort_results *r) {
   char hexbuf[MISHEGOS_INSN_MAXLEN * 2 + 1];
   for (size_t i = 0; i < r->input.len; i++) {
@@ -59,12 +118,14 @@ static void m_cohort_print_json(FILE *f, cohort_results *r) {
     if (i != 0) {
       fprintf(f, ",");
     }
+    char *escaped_result = json_escape_string(r->outputs[i].result.string);
     fprintf(f,
             "{ \"status\": { \"value\": %u, \"name\": \"%s\" }, \"ndecoded\": %u, \"workerno\": "
             "%u, \"worker_so\": \"%s\",\"len\": %ld, \"result\": \"%s\" }",
             r->outputs[i].status, status2str(r->outputs[i].status), r->outputs[i].ndecoded,
             r->outputs[i].workerno, r->outputs[i].workerso.string, r->outputs[i].result.len,
-            r->outputs[i].result.string);
+            escaped_result ? escaped_result : "");
+    free(escaped_result);
   }
 
   fprintf(f, "]}");
@@ -109,9 +170,7 @@ static void read_string(FILE *file, m_string *s, int len_size) {
   // this is because we tend to reuse the same memory alot (we optimize this out)
   m_fread(input, sizeof(char), string_length, file);
 
-  int newsize = strcspn(input, "\n");
-  input[newsize] = '\0';
-  s->len = newsize; // should this be new or old size?
+  s->len = string_length;
   s->string = input;
 }
 
