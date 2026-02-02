@@ -48,20 +48,7 @@ jobs:
         submodules: true
 
     - name: Install dependencies
-      run: |
-        sudo apt-get update
-
-        sudo apt-get install -y \
-          build-essential \
-          binutils-dev \
-          python3 \
-          cmake \
-          meson \
-          ruby \
-          autotools-dev \
-          autoconf \
-          llvm-dev \
-          libtool
+      run: sudo bash scripts/docker/install_dev_deps.sh
 
     - name: Build
       run: make -j$(nproc)
