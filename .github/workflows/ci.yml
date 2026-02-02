@@ -33,7 +33,7 @@ jobs:
 
     - name: Docker Smoketest
       run: |
-        docker run --rm mishegos bash -eo pipefail -c './src/mishegos/mishegos -m manual ./workers.spec <<< "90" | ./src/mish2jsonl/mish2jsonl'
+        docker run --rm mishegos bash -eo pipefail -c './src/mishegos/mishegos -m manual ./workers.spec <<< "90" | ./src/mish2jsonl/mish2jsonl' | jq .
 
     - name: Docker Test Fuzz
       run: |
@@ -70,7 +70,7 @@ jobs:
       # Disassemble NOP
       run: |
         set -eo pipefail
-        ./src/mishegos/mishegos -m manual ./workers.spec <<< "90" | ./src/mish2jsonl/mish2jsonl
+        ./src/mishegos/mishegos -m manual ./workers.spec <<< "90" | ./src/mish2jsonl/mish2jsonl | jq .
 
     - name: Test Fuzz
       run: |
