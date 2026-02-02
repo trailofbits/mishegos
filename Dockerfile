@@ -1,30 +1,65 @@
-FROM ubuntu:24.04
+# ==============================================================================
+# Stage 1: deps - Build dependencies base image
+# ==============================================================================
+FROM ubuntu:24.04 AS dev
 
-RUN export DEBIAN_FRONTEND="noninteractive" && \
-    apt-get update && \
-    apt-get install -y \
-        build-essential \
-        binutils-dev \
-        python3 \
-        cmake \
-        meson \
-        ruby \
-        autotools-dev \
-        autoconf \
-        libtool \
-        git \
-        curl \
-        llvm-dev \
-        libclang-dev \
-        clang
+COPY scripts/docker/install_dev_deps.sh /tmp/install_dev_deps.sh
+RUN bash /tmp/install_dev_deps.sh
 
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-ENV PATH="/root/.cargo/bin:${PATH}"
+USER ubuntu
+WORKDIR /home/ubuntu
+
+COPY scripts/docker/install_rust.sh /tmp/install_rust.sh
+RUN bash /tmp/install_rust.sh
+
+ENV PATH="/home/ubuntu/.cargo/bin:${PATH}"
+
+WORKDIR /workspace
+
+# ==============================================================================
+# Stage 2: build - Compile all components
+# ==============================================================================
+FROM dev AS build
+
+COPY --chown=ubuntu:ubuntu . .
+
+RUN make all -j $(nproc)
+
+# Prepare artifacts directory mirroring final deploy structure
+# TODO: Integrate this into a 'make install' command or something
+RUN mkdir -p ~/artifacts/src/mishegos ~/artifacts/src/mish2jsonl ~/artifacts/workers ~/artifacts/lib \
+             ~/artifacts/src/analysis ~/artifacts/src/mishmat \
+             ~/artifacts/src/worker/ghidra/build/sleigh-cmake/specfiles/Ghidra/Processors/x86/data/languages && \
+    cp src/mishegos/mishegos ~/artifacts/src/mishegos/ && \
+    cp src/mish2jsonl/mish2jsonl ~/artifacts/src/mish2jsonl/ && \
+    cp workers.spec ~/artifacts/ && \
+    find src/worker -name "*.so" -exec cp {} ~/artifacts/workers/ \; && \
+    cp src/worker/xed/xed/kits/xed-mishegos/lib/libxed.so ~/artifacts/lib/ 2>/dev/null || true && \
+    cp src/worker/capstone/capstone/libcapstone.so.5 ~/artifacts/lib/ 2>/dev/null || true && \
+    cp -r src/analysis/* ~/artifacts/src/analysis/ && \
+    cp -r src/mishmat/* ~/artifacts/src/mishmat/ && \
+    cp src/worker/ghidra/build/sleigh-cmake/specfiles/Ghidra/Processors/x86/data/languages/x86-64.sla \
+       src/worker/ghidra/build/sleigh-cmake/specfiles/Ghidra/Processors/x86/data/languages/x86-64.pspec \
+       ~/artifacts/src/worker/ghidra/build/sleigh-cmake/specfiles/Ghidra/Processors/x86/data/languages/ 2>/dev/null || true && \
+    patchelf --set-rpath '$ORIGIN/../lib' ~/artifacts/workers/xed.so 2>/dev/null || true && \
+    patchelf --set-rpath '$ORIGIN/../lib' ~/artifacts/workers/capstone.so 2>/dev/null || true && \
+    sed -i 's|^\./src/worker/[^/]*/|./workers/|g' ~/artifacts/workers.spec
+
+# ==============================================================================
+# Stage 3: deploy - Minimal runtime image
+# ==============================================================================
+FROM ubuntu:24.04 AS deploy
+
+COPY scripts/docker/install_runtime_deps.sh /tmp/install_runtime_deps.sh
+RUN bash /tmp/install_runtime_deps.sh
+
+USER ubuntu
 
 WORKDIR /app/mishegos
-COPY ./ .
 
-ARG TARGET=all
-RUN make "${TARGET}" -j $(nproc)
+# Copy all artifacts in one command
+COPY --from=build /home/ubuntu/artifacts/ .
+
+ENV LD_LIBRARY_PATH="/app/mishegos/lib"
 
 CMD ["/bin/bash"]
