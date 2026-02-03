@@ -65,10 +65,8 @@ void try_decode(decode_result *result, uint8_t *raw_insn, uint8_t length) {
   _unused(ZyanStatus_strerror);
 
   ZydisDecodedInstruction insn;
-  ZydisDecodedOperand operands[ZYDIS_MAX_OPERAND_COUNT_VISIBLE];
-  ZyanStatus zstatus =
-      ZydisDecoderDecodeFull(&zdecoder, raw_insn, length, &insn, operands,
-                             ZYDIS_MAX_OPERAND_COUNT_VISIBLE, ZYDIS_DFLAG_VISIBLE_OPERANDS_ONLY);
+  ZydisDecodedOperand operands[ZYDIS_MAX_OPERAND_COUNT];
+  ZyanStatus zstatus = ZydisDecoderDecodeFull(&zdecoder, raw_insn, length, &insn, operands);
   if (!ZYAN_SUCCESS(zstatus)) {
     DLOG("zydis decoding failed: %s", ZyanStatus_strerror(zstatus));
 
@@ -82,7 +80,7 @@ void try_decode(decode_result *result, uint8_t *raw_insn, uint8_t length) {
 
   zstatus =
       ZydisFormatterFormatInstruction(&zformatter, &insn, operands, insn.operand_count_visible,
-                                      result->result, MISHEGOS_DEC_MAXLEN, 0);
+                                      result->result, MISHEGOS_DEC_MAXLEN, 0, NULL);
   if (!ZYAN_SUCCESS(zstatus)) {
     DLOG("zydis formatting failed: %s", ZyanStatus_strerror(zstatus));
     result->status = S_FAILURE;
