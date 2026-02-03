@@ -31,7 +31,7 @@
 #ifndef __SLEIGHMISHEGOS__
 #define __SLEIGHMISHEGOS__
 
-#include <sleigh/sleighbase.hh>
+#include <ghidra/sleighbase.hh>
 
 namespace ghidra {
 

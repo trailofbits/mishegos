@@ -7,6 +7,7 @@ apt-get update && \
   apt-get install -y --no-install-recommends \
   binutils \
   llvm \
-  ruby
+  ruby \
+  zlib1g
 
 rm -rf /var/lib/apt/lists/*

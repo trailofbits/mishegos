@@ -19,6 +19,7 @@ apt-get update && \
   llvm-dev \
   libclang-dev \
   clang \
-  patchelf
+  patchelf \
+  zlib1g-dev
 
 rm -rf /var/lib/apt/lists/*
