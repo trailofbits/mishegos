@@ -3,9 +3,9 @@
  * initializing and loading bytes for sleigh to disassemble
  *   https://github.com/NationalSecurityAgency/ghidra/blob/47f76c78d6b7d5c56a9256b0666620863805ff30/Ghidra/Features/Decompiler/src/decompile/cpp/sleighexample.cc
  */
-#include <sleigh/architecture.hh>
-#include <sleigh/loadimage.hh>
-#include <sleigh/marshal.hh>
+#include <ghidra/architecture.hh>
+#include <ghidra/loadimage.hh>
+#include <ghidra/marshal.hh>
 
 #include <iostream>
 #include <exception>
@@ -106,6 +106,18 @@ SleighMishegos &g_trans() {
   return trans;
 }
 
+// Helper document to hold the sleigh element with the .sla file path
+Document &g_sleighdoc() {
+  static Document sleighdoc;
+  return sleighdoc;
+}
+
+// Helper element for the sleigh tag containing the .sla file path
+Element &g_sleighel() {
+  static Element sleighel(&g_sleighdoc());
+  return sleighel;
+}
+
 void worker_ctor() {
   AttributeId::initialize();
   ElementId::initialize();
@@ -119,10 +131,14 @@ void worker_ctor() {
   string pspecfilename = "src/worker/ghidra/build/sleigh-cmake/specfiles/Ghidra/Processors/x86/"
                          "data/languages/x86-64.pspec";
 
-  // Read sleigh and spec file into DOM
+  // Create a simple element with the sleigh file path as content (binary format)
+  Element &sleighel = g_sleighel();
+  sleighel.setName("sleigh");
+  sleighel.addContent(sleighfilename.c_str(), 0, sleighfilename.length());
+
+  // Read spec file into DOM (still XML)
   DocumentStorage &docstorage = g_docstorage();
-  Element *sleighroot = docstorage.openDocument(sleighfilename)->getRoot();
-  docstorage.registerTag(sleighroot);
+  docstorage.registerTag(&sleighel);
   Element *specroot = docstorage.openDocument(pspecfilename)->getRoot();
   docstorage.registerTag(specroot);
 

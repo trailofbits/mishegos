@@ -26,7 +26,9 @@
  * written in the same way had this functionality been written fresh.
  */
 #include "sleighMishegos.hh"
-#include <sleigh/loadimage.hh>
+#include <ghidra/loadimage.hh>
+#include <ghidra/slaformat.hh>
+#include <fstream>
 
 namespace ghidra {
 
@@ -569,7 +571,13 @@ void SleighMishegos::initialize(DocumentStorage &store)
     const Element *el = store.getTag("sleigh");
     if (el == (const Element *)0)
       throw LowlevelError("Could not find sleigh tag");
-    restoreXml(el);
+    sla::FormatDecode decoder(this);
+    ifstream s(el->getContent(), std::ios_base::binary);
+    if (!s)
+      throw LowlevelError("Could not open .sla file: " + el->getContent());
+    decoder.ingestStream(s);
+    s.close();
+    decode(decoder);
   }
   else
     reregisterContext();
