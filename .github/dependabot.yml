@@ -3,12 +3,31 @@ updates:
 - package-ecosystem: gitsubmodule
   directory: "/"
   schedule:
-    interval: daily
-    time: "10:00"
+    interval: weekly
   open-pull-requests-limit: 10
+  groups:
+    xed:
+      patterns:
+        - "src/worker/xed/*"
+    ghidra:
+      patterns:
+        - "src/worker/ghidra/*"
 - package-ecosystem: cargo
   directory: "/src/worker/yaxpeax-x86"
   schedule:
-    interval: daily
-    time: "10:00"
+    interval: weekly
   open-pull-requests-limit: 10
+  groups:
+    yaxpeax-x86-deps:
+      patterns:
+        - "*"
+- package-ecosystem: "github-actions"
+  cooldown:
+    default-days: 7
+  directory: "/"
+  schedule:
+    interval: "weekly"
+  groups:
+    github-actions:
+      patterns:
+        - "*"

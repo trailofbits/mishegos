@@ -1,12 +1,12 @@
 UNAME := $(shell uname)
 
 CFLAGS := \
-	-std=gnu11 -Wall -pthread \
+	-std=gnu11 -Wall -pthread -O2 \
 	-I$(shell pwd)/src/include
 LDLIBS := -ldl -lpthread
 CPPFLAGS :=
 CXXFLAGS := \
-	-std=c++11 -Wall -pthread \
+	-std=c++11 -Wall -pthread -O2 \
 	-I$(shell pwd)/src/include
 # TODO(ww): https://github.com/rust-lang/rust-bindgen/issues/1651
 # RUSTFLAGS := -D warnings
@@ -73,7 +73,7 @@ mishegos:
 
 .PHONY: worker
 worker:
-	$(MAKE) -C src/worker
+	$(MAKE) -C src/worker $(WORKERS)
 
 .PHONY: mish2jsonl
 mish2jsonl:

@@ -2,29 +2,26 @@ WORKERS = bfd \
 	capstone \
 	dynamorio \
 	fadec \
-	udis86 \
 	xed \
 	zydis \
 	bddisasm \
 	iced \
 	yaxpeax-x86 \
-	ghidra
+	ghidra \
+	llvm
 
 .PHONY: all
-all: worker $(WORKERS)
-
-worker: worker.c
+all: $(WORKERS)
 
 .PHONY: $(WORKERS)
 $(WORKERS):
 	$(MAKE) \
 		CFLAGS="$(CFLAGS) -fPIC" \
-		LDFLAGS="-shared" \
+		LDFLAGS="-shared -Wl,-z,defs" \
 		-C $@/
 
 .PHONY: clean
 clean:
-	rm -rf worker
 	for dir in $(WORKERS); do \
 		$(MAKE) -C $$dir/ clean; \
 	done

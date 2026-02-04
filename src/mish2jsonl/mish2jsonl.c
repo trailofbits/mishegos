@@ -1,7 +1,10 @@
+#include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include "mish_common.h"
 
 typedef struct m_string {
@@ -19,25 +22,110 @@ typedef struct worker_output {
 
 typedef struct cohort_results {
   uint32_t nworkers;
-  m_string input;
+  input_slot input;
   worker_output *outputs;
 } cohort_results;
 
 static cohort_results results;
 static int m_finished_parsing;
 
+static const char *status2str(decode_status status) {
+  switch (status) {
+  case S_NONE:
+    return "none";
+  case S_SUCCESS:
+    return "success";
+  case S_FAILURE:
+    return "failure";
+  case S_CRASH:
+    return "crash";
+  case S_PARTIAL:
+    return "partial";
+  case S_UNKNOWN:
+  default:
+    return "unknown";
+  }
+}
+
+// Escape a string for JSON output per RFC 7159.
+// Returns a newly allocated string that must be freed by caller.
+static char *json_escape_string(const char *input) {
+  if (input == NULL) {
+    return NULL;
+  }
+
+  size_t input_len = strlen(input);
+  size_t max_output_len = input_len * 6 + 1; // Worst case: \uXXXX per char
+  char *output = malloc(max_output_len);
+  if (output == NULL) {
+    return NULL;
+  }
+
+  char *out = output;
+  for (const char *in = input; *in != '\0'; in++) {
+    unsigned char c = (unsigned char)*in;
+    switch (c) {
+    case '"':
+      *out++ = '\\';
+      *out++ = '"';
+      break;
+    case '\\':
+      *out++ = '\\';
+      *out++ = '\\';
+      break;
+    case '\n':
+      *out++ = '\\';
+      *out++ = 'n';
+      break;
+    case '\r':
+      *out++ = '\\';
+      *out++ = 'r';
+      break;
+    case '\t':
+      *out++ = '\\';
+      *out++ = 't';
+      break;
+    case '\b':
+      *out++ = '\\';
+      *out++ = 'b';
+      break;
+    case '\f':
+      *out++ = '\\';
+      *out++ = 'f';
+      break;
+    default:
+      if (c < 0x20) {
+        out += sprintf(out, "\\u%04x", c);
+      } else {
+        *out++ = c;
+      }
+      break;
+    }
+  }
+  *out = '\0';
+  return output;
+}
+
 static void m_cohort_print_json(FILE *f, cohort_results *r) {
-  fprintf(f, "{ \"nworkers\": %u, \"input\": \"%s\", \"outputs\": [", r->nworkers, r->input.string);
+  char hexbuf[MISHEGOS_INSN_MAXLEN * 2 + 1];
+  for (size_t i = 0; i < r->input.len; i++) {
+    hexbuf[i * 2] = "0123456789abcdef"[r->input.raw_insn[i] / 0x10];
+    hexbuf[i * 2 + 1] = "0123456789abcdef"[r->input.raw_insn[i] % 0x10];
+  }
+  hexbuf[r->input.len * 2] = '\0';
+  fprintf(f, "{ \"nworkers\": %u, \"input\": \"%s\", \"outputs\": [", r->nworkers, hexbuf);
   for (int i = 0; i < r->nworkers; i++) {
     if (i != 0) {
       fprintf(f, ",");
     }
+    char *escaped_result = json_escape_string(r->outputs[i].result.string);
     fprintf(f,
             "{ \"status\": { \"value\": %u, \"name\": \"%s\" }, \"ndecoded\": %u, \"workerno\": "
             "%u, \"worker_so\": \"%s\",\"len\": %ld, \"result\": \"%s\" }",
             r->outputs[i].status, status2str(r->outputs[i].status), r->outputs[i].ndecoded,
             r->outputs[i].workerno, r->outputs[i].workerso.string, r->outputs[i].result.len,
-            r->outputs[i].result.string);
+            escaped_result ? escaped_result : "");
+    free(escaped_result);
   }
 
   fprintf(f, "]}");
@@ -82,23 +170,20 @@ static void read_string(FILE *file, m_string *s, int len_size) {
   // this is because we tend to reuse the same memory alot (we optimize this out)
   m_fread(input, sizeof(char), string_length, file);
 
-  int newsize = strcspn(input, "\n");
-  input[newsize] = '\0';
-  s->len = newsize; // should this be new or old size?
+  s->len = string_length;
   s->string = input;
 }
 
 static int read_next(FILE *file) {
   fread(&results.nworkers, sizeof(uint32_t), 1, file);
   results.outputs = malloc(sizeof(worker_output) * results.nworkers);
-  read_string(file, &results.input, 8);
+  m_fread(&results.input, sizeof(results.input), 1, file);
 
   for (int i = 0; i < results.nworkers; i++) {
+    read_string(file, &results.outputs[i].workerso, 8);
     m_fread(&results.outputs[i].status, sizeof(uint32_t), 1, file);
     m_fread(&results.outputs[i].ndecoded, sizeof(uint16_t), 1, file);
-    m_fread(&results.outputs[i].workerno, sizeof(uint32_t), 1, file);
 
-    read_string(file, &results.outputs[i].workerso, 8);
     read_string(file, &results.outputs[i].result, 2);
   }
 
@@ -106,7 +191,6 @@ static int read_next(FILE *file) {
 }
 
 static void free_cohort_results(cohort_results *result) {
-  free(results.input.string);
   for (int i = 0; i < results.nworkers; i++) {
     free(results.outputs[i].workerso.string);
     free(results.outputs[i].result.string);

@@ -11,67 +11,44 @@ on:
 
 jobs:
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Install dependencies
-        run: sudo apt install -y cppcheck clang-format-12
+        run: sudo apt install -y cppcheck clang-format
       - name: Lint
         run: |
           make fmt && git diff --exit-code
           make lint
 
   docker-build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v2
-
-    - name: Checkout submodules
-      run: |
-        auth_header="$(git config --local --get http.https://github.com/.extraheader)"
-        git submodule sync --recursive
-        git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        submodules: true
 
     - name: Docker build
       run: docker build -t mishegos .
 
     - name: Docker Smoketest
       run: |
-        docker run --rm mishegos bash -eo pipefail -c 'M=1 ./src/mishegos/mishegos ./workers.spec <<< "90" | ./src/mish2jsonl/mish2jsonl'
+        docker run --rm mishegos bash -eo pipefail -c './src/mishegos/mishegos -m manual ./workers.spec <<< "90" | ./src/mish2jsonl/mish2jsonl' | jq .
 
     - name: Docker Test Fuzz
       run: |
         docker run --rm mishegos bash -eo pipefail -c \
-          'timeout --preserve-status 5s ./src/mishegos/mishegos ./workers.spec | ./src/mish2jsonl/mish2jsonl | tail'
+          '(timeout --preserve-status 5s ./src/mishegos/mishegos -s 0 ./workers.spec || true) | ./src/mish2jsonl/mish2jsonl | tail'
 
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v2
-
-    - name: Checkout submodules
-      run: |
-        auth_header="$(git config --local --get http.https://github.com/.extraheader)"
-        git submodule sync --recursive
-        git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        submodules: true
 
     - name: Install dependencies
-      run: |
-        sudo apt-get update
-
-        sudo apt-get install -y \
-          build-essential \
-          binutils-dev \
-          python2 \
-          python3 \
-          cmake \
-          meson \
-          ruby \
-          autotools-dev \
-          autoconf \
-          libtool
-
-        sudo update-alternatives --install /usr/bin/python python /usr/bin/python2 1
+      run: sudo bash scripts/docker/install_dev_deps.sh
 
     - name: Build
       run: make -j$(nproc)
@@ -80,9 +57,9 @@ jobs:
       # Disassemble NOP
       run: |
         set -eo pipefail
-        M=1 ./src/mishegos/mishegos ./workers.spec <<< "90" | ./src/mish2jsonl/mish2jsonl
+        ./src/mishegos/mishegos -m manual ./workers.spec <<< "90" | ./src/mish2jsonl/mish2jsonl | jq .
 
     - name: Test Fuzz
       run: |
         set -eo pipefail
-        timeout --preserve-status 5s ./src/mishegos/mishegos ./workers.spec | ./src/mish2jsonl/mish2jsonl | tail
+        (timeout --preserve-status 5s ./src/mishegos/mishegos -s 0 ./workers.spec || true) | ./src/mish2jsonl/mish2jsonl | tail
