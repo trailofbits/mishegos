@@ -7,20 +7,21 @@
 #include <stdio.h>
 #include <string.h>
 
-/* An x86 instruction's opcode is no longer than 3 bytes.
+/* An x86 instruction's opcode is no longer than 5 bytes.
+ * The opcode also includes VEX/XOP/EVEX prefixes.
  */
 typedef struct __attribute__((packed)) {
   uint8_t len;
-  uint8_t op[3];
+  uint8_t op[5];
 } opcode;
-static_assert(sizeof(opcode) == 4, "opcode should be 4 bytes");
+static_assert(sizeof(opcode) == 6, "opcode should be 6 bytes");
 
 /* An x86 instruction is no longer than 15 bytes,
  * but the longest (potentially) structurally valid x86 instruction
- * is 26 bytes:
+ * is 28 bytes:
  *  4 byte legacy prefix
  *  1 byte prefix
- *  3 byte opcode
+ *  5 byte opcode (including VEX/XOP/EVEX prefix)
  *  1 byte ModR/M
  *  1 byte SIB
  *  8 byte displacement
@@ -33,7 +34,7 @@ static_assert(sizeof(opcode) == 4, "opcode should be 4 bytes");
 typedef struct {
   uint8_t off;
   uint8_t len;
-  uint8_t insn[26];
+  uint8_t insn[28];
 } insn_candidate;
 
 static uint64_t rng_state[4];
@@ -147,13 +148,16 @@ static uint8_t rand_byte() {
 #endif
 
 /* Creates a random (potentially invalid) opcode.
- * Opcodes are 1-3 bytes long, and come in three formats:
+ * Opcodes are 1-5 bytes long, and come in six formats:
  *  1. Single byte (raw opcode)
  *  2. Two bytes (escape byte, opcode)
  *  3. Three bytes (escape byte 1, escape byte 2, opcode)
+ *  4. 2-byte VEX (VEX 0xc4, VEX byte 2, opcode)
+ *  5. 3-byte VEX/XOP (VEX 0xc5/XOP 0x8f, VEX/XOP byte 2, VEX byte 3, opcode)
+ *  6. 4-byte EVEX (EVEX 0x62, EVEX byte 2-4, opcode)
  */
 static void rand_opcode(opcode *opc) {
-  switch (rand_byte() % 4) {
+  switch (rand_byte() % 8) {
   case 0: {
     opc->len = 1;
     opc->op[0] = rand_byte();
@@ -177,6 +181,38 @@ static void rand_opcode(opcode *opc) {
     opc->op[0] = 0x0f;
     opc->op[1] = 0x3a;
     opc->op[2] = rand_byte();
+    break;
+  }
+  case 4: { // VEX 2-byte
+    opc->len = 3;
+    opc->op[0] = 0xc5;
+    opc->op[1] = rand_byte();
+    opc->op[2] = rand_byte();
+    break;
+  }
+  case 5: { // VEX 3-byte
+    opc->len = 4;
+    opc->op[0] = 0xc4;
+    opc->op[1] = rand_byte();
+    opc->op[2] = rand_byte();
+    opc->op[3] = rand_byte();
+    break;
+  }
+  case 6: { // XOP
+    opc->len = 4;
+    opc->op[0] = 0x8f;
+    opc->op[1] = rand_byte();
+    opc->op[2] = rand_byte();
+    opc->op[3] = rand_byte();
+    break;
+  }
+  case 7: { // EVEX
+    opc->len = 5;
+    opc->op[0] = 0x62;
+    opc->op[1] = rand_byte();
+    opc->op[2] = rand_byte();
+    opc->op[3] = rand_byte();
+    opc->op[4] = rand_byte();
     break;
   }
   }
@@ -215,7 +251,7 @@ static void build_sliding_candidate() {
   }
   }
 
-  /* Opcode, up to 3 bytes.
+  /* Opcode, up to 5 bytes.
    */
   opcode opc;
   rand_opcode(&opc);
@@ -322,7 +358,7 @@ static bool structured_candidate(input_slot *slot) {
   }
 
   /* Random (but structured) opcode. Same as sliding.
-   * Running max: 8
+   * Running max: 10
    */
   opcode opc;
   rand_opcode(&opc);
@@ -331,7 +367,7 @@ static bool structured_candidate(input_slot *slot) {
 
   /* One or none ModR/M bytes, and one or none SIB bytes.
    * Both of these are just 8-bit LUTs, so they can be fully random.
-   * Running max: 10.
+   * Running max: 12.
    */
   if (rand_byte() % 2) {
     slot->raw_insn[len] = rand_byte();
@@ -343,11 +379,14 @@ static bool structured_candidate(input_slot *slot) {
     len++;
   }
 
-  /* Finally, we have up to 5 bytes to play with for the immediate and
+  /* Finally, we have at least 3 bytes to play with for the immediate and
    * displacement. Fill some amount of that (maybe not all) with randomness.
    */
   uint64_t tail = rand_long();
   uint8_t tail_size = rand_byte() % 6;
+  if (len + tail_size > MISHEGOS_INSN_MAXLEN) {
+    tail_size = MISHEGOS_INSN_MAXLEN - len;
+  }
   memcpy(slot->raw_insn + len, &tail, tail_size);
   len += tail_size;
 
