@@ -1,0 +1,28 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# filter-xed-nop: find and remove cohorts that XED thinks are NOPs.
+
+require "json"
+
+# TODO(ww): Remove this.
+XED_SO = "./src/worker/xed/xed.so"
+
+warn "[+] pass: filter-xed-nop"
+
+count = 0
+$stdin.each_line do |line|
+  result = JSON.parse line, symbolize_names: true
+
+  xed = result[:outputs].find { |o| o[:worker_so] == XED_SO }
+
+  # `addr32 nop ...` and `nop ...` both occur
+  if xed[:result].include?("nop ")
+    count += 1
+    next
+  end
+
+  $stdout.puts result.to_json
+end
+
+warn "[+] pass: filter-xed-nop done: #{count} filtered"
