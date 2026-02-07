@@ -14,7 +14,7 @@ zydis/build/libZydis.a:
 		mkdir build && \
 		cd build && \
 		cmake -DZYDIS_BUILD_TOOLS=OFF -DZYDIS_BUILD_EXAMPLES=OFF -DZYDIS_STATIC_DEFINE=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo .. && \
-		cmake --build . -- -j4
+		cmake --build . --parallel $(JOBS)
 
 zydis.so: zydis.o
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) \

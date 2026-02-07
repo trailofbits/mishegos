@@ -8,7 +8,7 @@ all: fadec.so
 fadec/build/libfadec.a:
 	mkdir -p fadec/build && cd fadec && \
 		env -u CPPFLAGS -u LDFLAGS -u LDLIBS meson build -Dbuildtype=release -Darchmode=only64 && \
-		ninja -C build -v
+		ninja -C build -v -j $(JOBS)
 
 fadec.so: fadec.c fadec/build/libfadec.a
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $< $(LDLIBS) -o $@

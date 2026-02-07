@@ -18,7 +18,7 @@ obj/lib64/libdrdecode.a:
 		cd obj && \
 		env -u CFLAGS -u CXXFLAGS \
 			cmake $(DYNAMORIO_BUILD_OPTS) ../dynamorio && \
-		cmake --build . -- -j4
+		cmake --build . --parallel $(JOBS)
 
 dynamorio.o: dynamorio.c obj/lib64/libdrdecode.a
 

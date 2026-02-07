@@ -51,7 +51,7 @@ jobs:
       run: sudo bash scripts/docker/install_dev_deps.sh
 
     - name: Build
-      run: make -j$(nproc)
+      run: make
 
     - name: Smoketest
       # Disassemble NOP
