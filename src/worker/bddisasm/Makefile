@@ -7,7 +7,7 @@ all: bddisasm.so
 
 bddisasm/build/bddisasm.a:
 	cmake -B bddisasm/build -S bddisasm -DCMAKE_BUILD_TYPE=Release -DBDD_INCLUDE_TOOL=OFF -DBDD_INCLUDE_ISAGENERATOR=OFF
-	cmake --build bddisasm/build --target bddisasm --parallel
+	cmake --build bddisasm/build --target bddisasm --parallel $(JOBS)
 
 bddisasm.so: bddisasm/build/bddisasm.a bddisasm.o
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) bddisasm.o $(LDLIBS) -o $@

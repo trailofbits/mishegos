@@ -21,6 +21,8 @@ else
 	LDLIBS := $(LDLIBS) -lrt
 endif
 
+JOBS ?= $(shell nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
+
 export UNAME
 export CFLAGS
 export LDLIBS
@@ -28,6 +30,8 @@ export CPPFLAGS
 export CXXFLAGS
 export RUST_BINDGEN_CLANG_ARGS
 export SO_SUFFIX
+export JOBS
+export CARGO_BUILD_JOBS = $(JOBS)
 
 
 ALL_SRCS := $(shell \

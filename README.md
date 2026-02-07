@@ -54,6 +54,19 @@ Build specific workers by passing a space-delimited list as the `WORKERS` varabl
 WORKERS="bfd capstone" make worker
 ```
 
+Control build parallelism with the `JOBS` variable (defaults to `nproc`):
+
+```bash
+# Parallel workers, each using all cores (default)
+make all -j$(nproc)
+
+# Conservative: limit both inter-worker and intra-worker parallelism
+make all -j4 JOBS=4
+
+# Sequential workers, full internal parallelism per worker
+make all -j1 JOBS=$(nproc)
+```
+
 ### Running
 
 Run the fuzzer for a bit:

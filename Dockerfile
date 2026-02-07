@@ -23,7 +23,7 @@ FROM dev AS build
 
 COPY --chown=ubuntu:ubuntu . .
 
-RUN make all -j $(nproc)
+RUN make all
 
 # Prepare artifacts directory mirroring final deploy structure
 # TODO: Integrate this into a 'make install' command or something
