@@ -4,7 +4,6 @@ updates:
   directory: "/"
   schedule:
     interval: weekly
-  open-pull-requests-limit: 10
   groups:
     xed:
       patterns:
@@ -16,7 +15,6 @@ updates:
   directory: "/src/worker/yaxpeax-x86"
   schedule:
     interval: weekly
-  open-pull-requests-limit: 10
   groups:
     yaxpeax-x86-deps:
       patterns:
