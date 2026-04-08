@@ -461,7 +461,7 @@ void DisassemblyCache::initialize(int4 min,int4 hashsize)
   hashtable = new ParserContext *[hashsize];
   for(int4 i=0;i<minimumreuse;++i) {
     ParserContext *pos = new ParserContext(contextcache,translate);
-    pos->initialize(75,20,constspace);
+    pos->initialize(constspace);
     list[i] = pos;
   }
   ParserContext *pos = list[0];
@@ -590,7 +590,7 @@ void SleighMishegos::initialize(DocumentStorage &store)
   pos = new ParserContext(cache,this);
   // Values taken from (now removed) DisassemblyCache::initialize. No
   // explanation for magic values
-  pos->initialize(75, 20, getConstantSpace());
+  pos->initialize(getConstantSpace());
 }
 
 /// \brief Obtain a parse tree for the instruction at the given address
