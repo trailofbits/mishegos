@@ -3,8 +3,8 @@ set -euo pipefail
 
 export DEBIAN_FRONTEND=noninteractive
 
-apt-get update && \
-  apt-get install -y --no-install-recommends \
+apt-get -o Acquire::Retries=3 update
+apt-get install -y --no-install-recommends \
   build-essential \
   binutils-dev \
   python3 \
@@ -21,5 +21,4 @@ apt-get update && \
   clang \
   patchelf \
   zlib1g-dev
-
 rm -rf /var/lib/apt/lists/*
