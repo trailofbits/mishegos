@@ -1,0 +1,3 @@
+name: prune-capstone
+desc: Remove all Capstone results
+run: prune-capstone
