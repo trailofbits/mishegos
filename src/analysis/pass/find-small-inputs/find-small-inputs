@@ -1,0 +1,23 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# find-small-inputs: find cohorts whose inputs are relatively small.
+
+require "json"
+
+warn "[+] pass: find-small-inputs"
+
+count = 0
+$stdin.each_line do |line|
+  result = JSON.parse line, symbolize_names: true
+
+  # input is a hex string, so 8 bytes * 2 bytes per hex char
+  if result[:input].size <= 16
+    count += 1
+    next
+  end
+
+  $stdout.puts result.to_json
+end
+
+warn "[+] pass: find-small-inputs done: #{count} filtered"
