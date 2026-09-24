@@ -1,5 +1,6 @@
 #include <err.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -121,7 +122,7 @@ static void m_cohort_print_json(FILE *f, cohort_results *r) {
     char *escaped_result = json_escape_string(r->outputs[i].result.string);
     fprintf(f,
             "{ \"status\": { \"value\": %u, \"name\": \"%s\" }, \"ndecoded\": %u, \"workerno\": "
-            "%u, \"worker_so\": \"%s\",\"len\": %ld, \"result\": \"%s\" }",
+            "%u, \"worker_so\": \"%s\",\"len\": %" PRIu64 ", \"result\": \"%s\" }",
             r->outputs[i].status, status2str(r->outputs[i].status), r->outputs[i].ndecoded,
             r->outputs[i].workerno, r->outputs[i].workerso.string, r->outputs[i].result.len,
             escaped_result ? escaped_result : "");
