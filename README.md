@@ -54,6 +54,31 @@ Build specific workers by passing a space-delimited list as the `WORKERS` varabl
 WORKERS="bfd capstone" make worker
 ```
 
+#### macOS
+
+mishegos also builds and runs natively on macOS (including Apple Silicon —
+the workers are pure decoders, so an x86-64 host is not required).
+
+Requirements:
+
+* Xcode Command Line Tools (`cc`, `make`)
+* `cmake` (e.g. `brew install cmake`) for the `zydis` and `bddisasm` workers
+* A Rust toolchain for the `iced` and `yaxpeax-x86` workers
+* `meson` and `ninja` (`brew install meson ninja`) for the `fadec` worker
+
+The `dynamorio` worker is Linux-only and is excluded automatically on macOS.
+The `bfd` worker needs Homebrew `binutils` (see the caveats in
+[`src/worker/bfd/Makefile`](./src/worker/bfd/Makefile)) and the `llvm` worker
+needs Homebrew `llvm`; neither is regularly tested on macOS, nor is `ghidra`.
+
+Worker shared objects keep their `.so` names on macOS, so `workers.spec`
+works unchanged. To build just the known-good macOS workers:
+
+```bash
+make mishegos mish2jsonl
+WORKERS="bddisasm capstone fadec iced xed yaxpeax-x86 zydis" make worker
+```
+
 Control build parallelism with the `JOBS` variable (defaults to `nproc`):
 
 ```bash
