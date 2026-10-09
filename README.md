@@ -61,6 +61,7 @@ the workers are pure decoders, so an x86-64 host is not required).
 
 Requirements:
 
+* macOS 14.4 or newer (the core uses `os_sync_wait_on_address` in place of futexes)
 * Xcode Command Line Tools (`cc`, `make`)
 * `cmake` (e.g. `brew install cmake`) for the `zydis` and `bddisasm` workers
 * A Rust toolchain for the `iced` and `yaxpeax-x86` workers
