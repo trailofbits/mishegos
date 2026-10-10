@@ -16,9 +16,17 @@ zydis/build/libZydis.a:
 		cmake -DZYDIS_BUILD_TOOLS=OFF -DZYDIS_BUILD_EXAMPLES=OFF -DZYDIS_STATIC_DEFINE=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo .. && \
 		cmake --build . --parallel $(JOBS)
 
+UNAME ?= $(shell uname)
+
+ifeq ($(UNAME), Darwin)
+	WHOLE_ARCHIVE_FLAGS := -Wl,-force_load,zydis/build/libZydis.a
+else
+	WHOLE_ARCHIVE_FLAGS := -Wl,--whole-archive zydis/build/libZydis.a -Wl,--no-whole-archive
+endif
+
 zydis.so: zydis.o
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) \
-	-Wl,--whole-archive zydis/build/libZydis.a -Wl,--no-whole-archive \
+	$(WHOLE_ARCHIVE_FLAGS) \
 	zydis.o $(LDLIBS) -o $@
 
 zydis.o: zydis/build/libZydis.a zydis.c
