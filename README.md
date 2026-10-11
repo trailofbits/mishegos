@@ -54,6 +54,39 @@ Build specific workers by passing a space-delimited list as the `WORKERS` varabl
 WORKERS="bfd capstone" make worker
 ```
 
+#### macOS
+
+mishegos also builds and runs natively on macOS (including Apple Silicon —
+the workers are pure decoders, so an x86-64 host is not required).
+
+Requirements:
+
+* macOS 14.4 or newer (the core uses `os_sync_wait_on_address` in place of futexes)
+* Xcode Command Line Tools (`cc`, `make`)
+* `cmake` (e.g. `brew install cmake`) for the `zydis` and `bddisasm` workers
+* A Rust toolchain for the `iced` and `yaxpeax-x86` workers
+* `meson` and `ninja` (`brew install meson ninja`) for the `fadec` worker
+
+The `dynamorio` worker is Linux-only and is excluded automatically on macOS.
+The `bfd` worker needs Homebrew `binutils` (see the caveats in
+[`src/worker/bfd/Makefile`](./src/worker/bfd/Makefile)) and the `llvm` worker
+needs Homebrew `llvm`; neither is regularly tested on macOS, nor is `ghidra`.
+
+Worker shared objects keep their `.so` names on macOS. The default `workers.spec`
+includes workers that are unavailable or not built by the commands below, so
+create a specification containing just the known-good macOS workers:
+
+```bash
+make mishegos mish2jsonl
+WORKERS="bddisasm capstone fadec iced xed yaxpeax-x86 zydis" make worker
+grep -E '/(bddisasm|capstone|fadec|iced|xed|yaxpeax-x86|zydis)/' workers.spec \
+  > /tmp/mishegos-workers.spec
+
+# Decode a NOP through all seven workers and print the JSONL result.
+printf '90\n' | ./src/mishegos/mishegos -m manual /tmp/mishegos-workers.spec \
+  | ./src/mish2jsonl/mish2jsonl
+```
+
 Control build parallelism with the `JOBS` variable (defaults to `nproc`):
 
 ```bash
@@ -68,6 +101,9 @@ make all -j1 JOBS=$(nproc)
 ```
 
 ### Running
+
+On macOS, use `/tmp/mishegos-workers.spec` from the build instructions in place
+of `./workers.spec` in the commands below.
 
 Run the fuzzer for a bit:
 

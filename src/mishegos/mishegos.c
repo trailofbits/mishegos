@@ -17,13 +17,41 @@
 #include <unistd.h>
 #include <signal.h>
 #include <sys/mman.h>
-#include <sys/prctl.h>
 #include <sys/random.h>
-#include <sys/syscall.h>
 #include <sys/wait.h>
+
+#ifndef MAP_POPULATE
+#define MAP_POPULATE 0
+#endif
+
+#if defined(__linux__)
 #include <linux/futex.h>
+#include <sys/prctl.h>
+#include <sys/syscall.h>
 
 #define WITH_FUTEX
+
+static void mish_futex_wait(_Atomic uint32_t *addr, uint32_t old) {
+  syscall(SYS_futex, addr, FUTEX_WAIT, old, NULL);
+}
+
+static void mish_futex_wake(_Atomic uint32_t *addr) {
+  syscall(SYS_futex, addr, FUTEX_WAKE, INT_MAX);
+}
+#elif defined(__APPLE__)
+#include <os/os_sync_wait_on_address.h>
+
+#define WITH_FUTEX
+
+static void mish_futex_wait(_Atomic uint32_t *addr, uint32_t old) {
+  os_sync_wait_on_address((void *)addr, (uint64_t)old, sizeof(uint32_t),
+                          OS_SYNC_WAIT_ON_ADDRESS_SHARED);
+}
+
+static void mish_futex_wake(_Atomic uint32_t *addr) {
+  os_sync_wake_by_address_all((void *)addr, sizeof(uint32_t), OS_SYNC_WAKE_BY_ADDRESS_SHARED);
+}
+#endif
 
 typedef struct {
   _Atomic uint32_t val;
@@ -43,7 +71,7 @@ static void mish_atomic_wait_for(mish_atomic_uint *var, uint32_t target) {
 #ifdef WITH_FUTEX
     if (++cnt > 10000) {
       atomic_fetch_add_explicit(&var->waiters, 1, memory_order_relaxed);
-      syscall(SYS_futex, &var->val, FUTEX_WAIT, old, NULL);
+      mish_futex_wait(&var->val, old);
       atomic_fetch_sub_explicit(&var->waiters, 1, memory_order_relaxed);
     }
 #endif
@@ -65,7 +93,7 @@ static void mish_atomic_store(mish_atomic_uint *var, uint32_t val) {
 static void mish_atomic_notify(mish_atomic_uint *var) {
 #ifdef WITH_FUTEX
   if (atomic_load_explicit(&var->waiters, memory_order_relaxed))
-    syscall(SYS_futex, &var->val, FUTEX_WAKE, INT_MAX);
+    mish_futex_wake(&var->val);
 #endif
 }
 
@@ -177,6 +205,11 @@ static int filter_min_success = 1;
 static int filter_max_success = MISHEGOS_MAX_NWORKERS;
 static bool filter_ndecoded_same = false;
 
+static void write_output(const void *data, size_t size) {
+  if (fwrite(data, 1, size, stdout) != size)
+    err(1, "write output");
+}
+
 static void process(size_t slot, size_t idx, input_chunk *input_chunks, int nworkers,
                     struct worker_config *workers) {
   int num_success = 0;
@@ -199,18 +232,18 @@ static void process(size_t slot, size_t idx, input_chunk *input_chunks, int nwor
   return;
 
 keep:;
-  fwrite(&nworkers, sizeof(nworkers), 1, stdout);
+  write_output(&nworkers, sizeof(nworkers));
 
   input_slot *input = &input_chunks[slot].inputs[idx];
-  fwrite(input, sizeof(*input), 1, stdout);
+  write_output(input, sizeof(*input));
   for (int j = 0; j < nworkers; j++) {
-    fwrite(&workers[j].soname_len, sizeof(workers[j].soname_len), 1, stdout);
-    fwrite(workers[j].soname, 1, workers[j].soname_len, stdout);
+    write_output(&workers[j].soname_len, sizeof(workers[j].soname_len));
+    write_output(workers[j].soname, workers[j].soname_len);
 
     output_slot *output = &workers[j].output_chunks[slot].outputs[idx];
     static_assert(offsetof(output_slot, result) == sizeof(output_slot) - MISHEGOS_DEC_MAXLEN,
                   "expect result buffer to be at end of slot");
-    fwrite(output, sizeof(*output) - MISHEGOS_DEC_MAXLEN + output->len, 1, stdout);
+    write_output(output, sizeof(*output) - MISHEGOS_DEC_MAXLEN + output->len);
   }
 }
 
@@ -242,7 +275,9 @@ static void worker_start(struct worker_config *wc) {
       perror("fork");
       exit(1);
     } else if (child == 0) {
+#ifdef __linux__
       prctl(PR_SET_PDEATHSIG, SIGHUP);
+#endif
       close(pipe_fds[1]);
       if (read(pipe_fds[0], &tmp, 1) != 1) {
         /* parent died without us being killed by SIGHUP -- so exit. */
@@ -305,7 +340,7 @@ int main(int argc, char **argv) {
   while ((opt = getopt(argc, argv, "htm:s:n")) != -1) {
     switch (opt) {
     case 't':
-      thread_mode = false;
+      thread_mode = true;
       break;
     case 'm':
       mutator_name = optarg;
@@ -345,7 +380,8 @@ int main(int argc, char **argv) {
   if (!thread_mode) {
     struct sigaction sigchld_action = {0};
     sigchld_action.sa_handler = sigchld_handler;
-    sigchld_action.sa_flags = SA_NOCLDSTOP;
+    /* Worker exits must not interrupt writes to the output stream. */
+    sigchld_action.sa_flags = SA_NOCLDSTOP | SA_RESTART;
     if (sigaction(SIGCHLD, &sigchld_action, NULL)) {
       perror("sigaction");
       return 1;
@@ -459,4 +495,15 @@ int main(int argc, char **argv) {
       gen++;
     }
   }
+
+  if (thread_mode) {
+    for (int i = 0; i < nworkers; i++) {
+      int error = pthread_join(workers[i].thread, NULL);
+      if (error != 0)
+        errx(1, "pthread_join: %s", strerror(error));
+    }
+  }
+
+  if (fflush(stdout) == EOF)
+    err(1, "flush output");
 }
