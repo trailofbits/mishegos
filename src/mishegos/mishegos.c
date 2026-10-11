@@ -496,6 +496,14 @@ int main(int argc, char **argv) {
     }
   }
 
+  if (thread_mode) {
+    for (int i = 0; i < nworkers; i++) {
+      int error = pthread_join(workers[i].thread, NULL);
+      if (error != 0)
+        errx(1, "pthread_join: %s", strerror(error));
+    }
+  }
+
   if (fflush(stdout) == EOF)
     err(1, "flush output");
 }
