@@ -205,6 +205,11 @@ static int filter_min_success = 1;
 static int filter_max_success = MISHEGOS_MAX_NWORKERS;
 static bool filter_ndecoded_same = false;
 
+static void write_output(const void *data, size_t size) {
+  if (fwrite(data, 1, size, stdout) != size)
+    err(1, "write output");
+}
+
 static void process(size_t slot, size_t idx, input_chunk *input_chunks, int nworkers,
                     struct worker_config *workers) {
   int num_success = 0;
@@ -227,18 +232,18 @@ static void process(size_t slot, size_t idx, input_chunk *input_chunks, int nwor
   return;
 
 keep:;
-  fwrite(&nworkers, sizeof(nworkers), 1, stdout);
+  write_output(&nworkers, sizeof(nworkers));
 
   input_slot *input = &input_chunks[slot].inputs[idx];
-  fwrite(input, sizeof(*input), 1, stdout);
+  write_output(input, sizeof(*input));
   for (int j = 0; j < nworkers; j++) {
-    fwrite(&workers[j].soname_len, sizeof(workers[j].soname_len), 1, stdout);
-    fwrite(workers[j].soname, 1, workers[j].soname_len, stdout);
+    write_output(&workers[j].soname_len, sizeof(workers[j].soname_len));
+    write_output(workers[j].soname, workers[j].soname_len);
 
     output_slot *output = &workers[j].output_chunks[slot].outputs[idx];
     static_assert(offsetof(output_slot, result) == sizeof(output_slot) - MISHEGOS_DEC_MAXLEN,
                   "expect result buffer to be at end of slot");
-    fwrite(output, sizeof(*output) - MISHEGOS_DEC_MAXLEN + output->len, 1, stdout);
+    write_output(output, sizeof(*output) - MISHEGOS_DEC_MAXLEN + output->len);
   }
 }
 
@@ -375,7 +380,8 @@ int main(int argc, char **argv) {
   if (!thread_mode) {
     struct sigaction sigchld_action = {0};
     sigchld_action.sa_handler = sigchld_handler;
-    sigchld_action.sa_flags = SA_NOCLDSTOP;
+    /* Worker exits must not interrupt writes to the output stream. */
+    sigchld_action.sa_flags = SA_NOCLDSTOP | SA_RESTART;
     if (sigaction(SIGCHLD, &sigchld_action, NULL)) {
       perror("sigaction");
       return 1;
@@ -489,4 +495,7 @@ int main(int argc, char **argv) {
       gen++;
     }
   }
+
+  if (fflush(stdout) == EOF)
+    err(1, "flush output");
 }
