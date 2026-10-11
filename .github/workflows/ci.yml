@@ -41,25 +41,66 @@ jobs:
           '(timeout --preserve-status 5s ./src/mishegos/mishegos -s 0 ./workers.spec || true) | ./src/mish2jsonl/mish2jsonl | tail'
 
   build:
-    runs-on: ubuntu-24.04
+    name: ${{ matrix.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Preserve the Linux check name required by branch protection.
+          - os: ubuntu-26.04
+            name: build
+          - os: macos-26
+            name: build-macos
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      WORKER_SPEC: ./workers.spec
+      TIMEOUT: timeout
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         submodules: true
 
-    - name: Install dependencies
+    - name: Install Linux dependencies
+      if: runner.os == 'Linux'
       run: sudo bash scripts/docker/install_dev_deps.sh
+
+    - name: Install macOS dependencies
+      if: runner.os == 'macOS'
+      run: |
+        brew install cmake meson ninja coreutils
+        echo "WORKERS=bddisasm capstone fadec iced xed yaxpeax-x86 zydis" >> "$GITHUB_ENV"
+        echo "TIMEOUT=gtimeout" >> "$GITHUB_ENV"
+        grep -E '/(bddisasm|capstone|fadec|iced|xed|yaxpeax-x86|zydis)/' workers.spec \
+          > "$RUNNER_TEMP/workers.spec"
+        echo "WORKER_SPEC=$RUNNER_TEMP/workers.spec" >> "$GITHUB_ENV"
 
     - name: Build
       run: make
 
     - name: Smoketest
-      # Disassemble NOP
+      # Disassemble NOP in process and thread modes.
       run: |
-        set -eo pipefail
-        ./src/mishegos/mishegos -m manual ./workers.spec <<< "90" | ./src/mish2jsonl/mish2jsonl | jq .
+        for mode in process thread; do
+          flags=()
+          if [[ "$mode" == thread ]]; then
+            flags=(-t)
+          fi
+          ./src/mishegos/mishegos "${flags[@]}" -m manual "$WORKER_SPEC" <<< "90" \
+            | ./src/mish2jsonl/mish2jsonl \
+            | jq -e '.nworkers > 0 and all(.outputs[]; .status.name == "success" and .ndecoded == 1)'
+        done
 
     - name: Test Fuzz
       run: |
-        set -eo pipefail
-        (timeout --preserve-status 5s ./src/mishegos/mishegos -s 0 ./workers.spec || true) | ./src/mish2jsonl/mish2jsonl | tail
+        for mode in process thread; do
+          flags=()
+          if [[ "$mode" == thread ]]; then
+            flags=(-t)
+          fi
+          ("$TIMEOUT" --kill-after=5s 5s ./src/mishegos/mishegos "${flags[@]}" -s 0 "$WORKER_SPEC" \
+            || test "$?" -eq 124) \
+            | ./src/mish2jsonl/mish2jsonl | jq -ce . | tail
+        done
