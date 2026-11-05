@@ -1,0 +1,20 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# prune-capstone: remove Capstone results from each cohort, if present
+
+require "json"
+
+# TODO(ww): Remove this.
+CAPSTONE_SO = "./src/worker/capstone/capstone.so"
+
+warn "[+] pass: prune-capstone"
+
+$stdin.each_line do |line|
+  result = JSON.parse line, symbolize_names: true
+  result[:outputs].reject! { |o| o[:worker_so] == CAPSTONE_SO }
+
+  $stdout.puts result.to_json
+end
+
+warn "[+] pass: prune-capstone done"
