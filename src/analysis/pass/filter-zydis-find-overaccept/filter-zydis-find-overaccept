@@ -1,0 +1,48 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# filter-zydis-find-overaccept: find inputs that Zydis potentially overaccepts
+# (i.e., inputs the other high-quality decoders think are invalid)
+
+require "json"
+
+# TODO(ww): Remove this.
+BDDISASM_SO = "./src/worker/bddisasm/bddisasm.so"
+XED_SO = "./src/worker/xed/xed.so"
+ZYDIS_SO = "./src/worker/zydis/zydis.so"
+ICED_SO = "./src/worker/iced/iced.so"
+
+def success?(decoder)
+  decoder[:status][:value] == 1
+end
+
+def failure?(decoder)
+  !success?(decoder)
+end
+
+def failure_by_consensus?(*decoders)
+  nfailures = decoders.select { |d| failure?(d) }.size
+
+  (nfailures / decoders.size.to_f) > 0.50
+end
+
+warn "[+] pass: filter-zydis-find-overaccept"
+
+count = 0
+$stdin.each_line do |line|
+  result = JSON.parse line, symbolize_names: true
+
+  bddisasm = result[:outputs].find { |o| o[:worker_so] == BDDISASM_SO }
+  xed = result[:outputs].find { |o| o[:worker_so] == XED_SO }
+  zydis = result[:outputs].find { |o| o[:worker_so] == ZYDIS_SO }
+  iced = result[:outputs].find { |o| o[:worker_so] == ICED_SO }
+
+  # If Zydis reports success when other high-quality decoders don't, keep it.
+  if success?(zydis) && failure_by_consensus?(bddisasm, xed, iced)
+    $stdout.puts result.to_json
+  end
+
+  count += 1
+end
+
+warn "[+] pass: filter-zydis-find-overaccept done: #{count} filtered"
